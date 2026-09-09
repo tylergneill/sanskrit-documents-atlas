@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — Sanskrit Documents Atlas</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+
+  <!-- Sanscript: pick one source you like; this one is commonly used -->
+  <script src="https://cdn.jsdelivr.net/npm/@indic-transliteration/sanscript@1.3.3/sanscript.min.js"></script>
+</head>
+<body>
+  <header class="topbar about-topbar">
+    <div class="brand">
+      <a href="./index.html" class="brand-title brand-title-link" title="Back to All">Sanskrit Documents Atlas</a>
+    </div>
+
+    <nav class="topnav">
+      <label class="navlabel" for="schemeSelect">अ→a</label>
+      <select id="schemeSelect">
+        <option value="devanagari">देवनागरी</option>
+        <option value="iast" selected>IAST</option>
+        <option value="itrans">ITRANS</option>
+        <option value="hk">HK</option>
+        <option value="iso">ISO 15919</option>
+        <option value="slp1">SLP1</option>
+      </select>
+      <button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark theme"></button>
+    </nav>
+
+    <a href="./index.html" class="topbar-link about-back-link">← Back to tree</a>
+  </header>
+
+  <main class="mainpane" style="height: calc(100% - 48px); display:flex; justify-content:center;">
+    <section class="content" style="width:100%; max-width:900px;">
+      <div class="block">
+        <h2 id="about" style="margin-top:0;">About</h2>
+        <p>
+          <a href="https://sanskritdocuments.org" target="_blank" rel="noopener">sanskritdocuments.org</a>
+          is a crowdsourced archive of mostly small, mostly devotional Sanskrit e-texts.
+          It's been online since the 1990s, making it one of the oldest such collections on the web.
+        </p>
+        <p>
+          This unofficial “atlas” interface — not affiliated in any way —
+          offers a better way to explore the contents of this collection.
+          It is an "atlas" in the sense that it not only charts the navigable waters —
+          with more transparent browsing by folder, topic, and category —
+          but also plumbs their depths —
+          with visibility into sizes, counts, and changes over time
+          that the source collection doesn't surface on its own.
+          It is not a mirror, as it hosts no text of its own;
+          instead, every entry links back to sanskritdocuments.org for the actual content.
+        </p>
+        <p>
+          For more perspective on this and sibling Atlas projects, see <a href="https://sagarasangama.info/" id="parentLink">Sāgarasaṅgama</a>.
+        </p>
+        <p>
+          code: <span id="appVersion"></span>, <a href="https://github.com/tylergneill/sanskrit-documents-atlas" target="_blank" rel="noopener">on GitHub</a>
+        </p>
+        <p>
+          <span id="contentDate"></span>
+        </p>
+        <p>
+          <span id="pipelineRun"></span>
+        </p>
+      </div>
+
+      <details class="block collapsible">
+        <summary><h2 id="practical-intro">Practical Intro to Sanskrit Documents Structure</h2></summary>
+
+        <h3 id="files-and-folders">Files and Folders</h3>
+        <p>
+          Each item on sanskritdocuments.org lives as an HTML file inside a particular folder on the server.
+          For example:
+          the <a href="https://sanskritdocuments.org/doc_devii/durga7.html" target="_blank"><span class="sa-cap">श्रीदुर्गासप्तश्लोकी</span> document</a>
+          exists as <code>durga7.html</code> in the folder <code>doc_devii</code>.
+          Zero document files are duplicated across multiple folders.
+        </p>
+        <p>
+          There are <strong>twenty</strong> such document folders,
+          and their names are all simple Roman strings prefixed with "doc_".
+          <span data-stat="folders_nonmisc">13</span> have simple genre or deity names
+          like "doc_veda" and "doc_rama",
+          while the other <span data-stat="folders_misc">7</span> are
+          <code>z_misc_*</code> catch-alls, ostensibly prefixed to sort last,
+          for example, "doc_z_misc_major_works."
+        </p>
+        <p>
+          Navigating to the folder path by itself
+          displays a webpage listing every item in the folder,
+          followed by additional links and information below.
+          For example, <a href="https://sanskritdocuments.org/doc_devii/" target="_blank">/doc_devii/</a>.
+        </p>
+
+        <h3 id="menus">Menus</h3>
+        <p>
+          Visitors to sanskritdocuments.org are encouraged to browse the site's in-house collection
+          via three main navigation menus:
+          वर्ग ("by category"), देव ("by deity"), and मुख्य ग्रन्थ ("Major Sanskrit Works").
+          The <a href="https://sanskritdocuments.org/sitemap/" target="_blank">sitemap</a>
+          provides an overview of these menus and their nesting structure.
+          136 overlapping menu items resolve to <span data-stat="topic_pages_published">87</span> actual pages.
+          One might expect that these menu items link to the folder listings mentioned above,
+          but this is not the case.
+        </p>
+
+        <h3 id="topics">Topics</h3>
+        <p>
+          The intermediate structure between folders and menus —
+          the pages that menus actually link to —
+          is topics.
+          In short:
+        </p>
+        <p class="callout">
+          Documents live in folders,
+          topic pages provide cross-cutting views of thematically related documents,
+          and menus provide cross-cutting views of topic pages.
+        </p>
+        <p>
+          Topic page URLs look like <code>/sanskrit/*/</code>,
+          for example, <a href="https://sanskritdocuments.org/sanskrit/mantra/" target="_blank">/sanskrit/mantra/</a>.
+          Exactly like folder pages, they begin with a list of items
+          and often end with a freeform block of additional links and information.
+        </p>
+        <p>
+          There are <span data-stat="topic_pages">85</span> such topics (plus
+          <span data-stat="topic_pages_suppressed">2</span> redundant ones;
+          see <a href="#data-quality">Data Quality</a> below).
+          <span data-stat="folders_nonmisc">13</span> of these share their name with a folder —
+          the non-<code>z_misc_*</code> ones with a simple genre or deity name —
+          for example, /sanskrit/devii and /doc_devii/.
+          In these cases, the topic page usually contains all the documents
+          listed on the corresponding location page, plus more from other locations.
+          More generally speaking, topics link freely across any number of locations,
+          from one to <span data-stat="max_topic_folders">16</span>.
+        </p>
+
+        <!-- TOPIC_FOLDERS:START -- generated by `python -m pipeline.audit --update-about`; do not hand-edit between these markers -->
+        <ul style="list-style: none; padding-left: 0; margin: 0;">
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Which folders each topic draws on</span></summary>
+          <div style="overflow-x:auto;">
+            <table style="border-collapse:collapse; font-size:13px; margin:0 0 4px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="padding:2px 12px 2px 0; text-align:left;">topic</th>
+                  <th style="padding:2px 12px 2px 0; text-align:right;">docs</th>
+                  <th style="padding:2px 12px 2px 0; text-align:right;">folders</th>
+                  <th style="padding:2px 0; text-align:left;">drawn from</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding:2px 12px 2px 0;"><code>devii</code></td><td style="padding:2px 12px 2px 0; text-align:right;">2,142</td><td style="padding:2px 12px 2px 0; text-align:right;">14</td><td style="padding:2px 0;"><code>devii</code>&nbsp;95%; <code>upanishhat</code>&nbsp;1%; <code>shiva</code>&nbsp;1%; <span style="opacity:.6;">+11 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>stotra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">2,061</td><td style="padding:2px 12px 2px 0; text-align:right;">16</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;31%; <code>devii</code>&nbsp;21%; <code>shiva</code>&nbsp;18%; <span style="opacity:.6;">+13 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shiva</code></td><td style="padding:2px 12px 2px 0; text-align:right;">1,987</td><td style="padding:2px 12px 2px 0; text-align:right;">14</td><td style="padding:2px 0;"><code>shiva</code>&nbsp;96%; <code>upanishhat</code>&nbsp;1%; <code>devii</code>&nbsp;1%; <span style="opacity:.6;">+11 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>vishnu</code></td><td style="padding:2px 12px 2px 0; text-align:right;">1,812</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;97%; <code>deities_misc</code>&nbsp;1%; <code>upanishhat</code>&nbsp;1%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>deities_misc</code></td><td style="padding:2px 12px 2px 0; text-align:right;">1,126</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;98%; <code>vishhnu</code>&nbsp;1%; <code>upanishhat</code>&nbsp;0%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ashtaka</code></td><td style="padding:2px 12px 2px 0; text-align:right;">1,016</td><td style="padding:2px 12px 2px 0; text-align:right;">15</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;25%; <code>deities_misc</code>&nbsp;22%; <code>devii</code>&nbsp;22%; <span style="opacity:.6;">+12 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>misc</code></td><td style="padding:2px 12px 2px 0; text-align:right;">852</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>z_misc_general</code>&nbsp;96%; <code>z_misc_misc</code>&nbsp;3%; <code>deities_misc</code>&nbsp;1%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>krishna</code></td><td style="padding:2px 12px 2px 0; text-align:right;">750</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;90%; <code>deities_misc</code>&nbsp;3%; <code>devii</code>&nbsp;2%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>gurudev</code></td><td style="padding:2px 12px 2px 0; text-align:right;">707</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;95%; <code>z_misc_general</code>&nbsp;2%; <code>vishhnu</code>&nbsp;1%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>dashamahavidya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">440</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>devii</code>&nbsp;98%; <code>upanishhat</code>&nbsp;2%; <code>deities_misc</code>&nbsp;0%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ganesha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">413</td><td style="padding:2px 12px 2px 0; text-align:right;">7</td><td style="padding:2px 0;"><code>ganesha</code>&nbsp;94%; <code>purana</code>&nbsp;3%; <code>giitaa</code>&nbsp;1%; <span style="opacity:.6;">+4 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ashtottarashatanamavali</code></td><td style="padding:2px 12px 2px 0; text-align:right;">370</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>devii</code>&nbsp;34%; <code>deities_misc</code>&nbsp;18%; <code>shiva</code>&nbsp;16%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>raama</code></td><td style="padding:2px 12px 2px 0; text-align:right;">363</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>raama</code>&nbsp;92%; <code>devii</code>&nbsp;2%; <code>upanishhat</code>&nbsp;2%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>kavacha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">320</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>devii</code>&nbsp;47%; <code>vishhnu</code>&nbsp;13%; <code>shiva</code>&nbsp;12%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>dashavatara</code></td><td style="padding:2px 12px 2px 0; text-align:right;">281</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;98%; <code>upanishhat</code>&nbsp;1%; <code>z_misc_major_works</code>&nbsp;0%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>upanishhat</code></td><td style="padding:2px 12px 2px 0; text-align:right;">253</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>upanishhat</code>&nbsp;91%; <code>shiva</code>&nbsp;3%; <code>veda</code>&nbsp;2%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>major_works</code></td><td style="padding:2px 12px 2px 0; text-align:right;">245</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;94%; <code>shiva</code>&nbsp;2%; <code>raama</code>&nbsp;2%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sahasranama</code></td><td style="padding:2px 12px 2px 0; text-align:right;">245</td><td style="padding:2px 12px 2px 0; text-align:right;">10</td><td style="padding:2px 0;"><code>devii</code>&nbsp;45%; <code>shiva</code>&nbsp;18%; <code>deities_misc</code>&nbsp;13%; <span style="opacity:.6;">+7 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ashtottarashatanama</code></td><td style="padding:2px 12px 2px 0; text-align:right;">226</td><td style="padding:2px 12px 2px 0; text-align:right;">12</td><td style="padding:2px 0;"><code>devii</code>&nbsp;31%; <code>vishhnu</code>&nbsp;18%; <code>shiva</code>&nbsp;16%; <span style="opacity:.6;">+9 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>mantra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">213</td><td style="padding:2px 12px 2px 0; text-align:right;">15</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;24%; <code>devii</code>&nbsp;22%; <code>deities_misc</code>&nbsp;15%; <span style="opacity:.6;">+12 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>navagraha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">208</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>z_misc_navagraha</code>&nbsp;99%; <code>deities_misc</code>&nbsp;0%; <code>veda</code>&nbsp;0%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sahasranamavali</code></td><td style="padding:2px 12px 2px 0; text-align:right;">191</td><td style="padding:2px 12px 2px 0; text-align:right;">12</td><td style="padding:2px 0;"><code>devii</code>&nbsp;41%; <code>shiva</code>&nbsp;20%; <code>vishhnu</code>&nbsp;12%; <span style="opacity:.6;">+9 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>subrahmanya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">188</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>subrahmanya</code>&nbsp;95%; <code>devii</code>&nbsp;3%; <code>veda</code>&nbsp;1%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>nadi</code></td><td style="padding:2px 12px 2px 0; text-align:right;">180</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>devii</code>&nbsp;97%; <code>z_misc_general</code>&nbsp;2%; <code>raama</code>&nbsp;1%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>panchaka</code></td><td style="padding:2px 12px 2px 0; text-align:right;">176</td><td style="padding:2px 12px 2px 0; text-align:right;">10</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;28%; <code>devii</code>&nbsp;16%; <code>vishhnu</code>&nbsp;14%; <span style="opacity:.6;">+7 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shankaracharya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">174</td><td style="padding:2px 12px 2px 0; text-align:right;">12</td><td style="padding:2px 0;"><code>z_misc_shankara</code>&nbsp;29%; <code>devii</code>&nbsp;26%; <code>shiva</code>&nbsp;13%; <span style="opacity:.6;">+9 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sarasvati</code></td><td style="padding:2px 12px 2px 0; text-align:right;">157</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>devii</code>&nbsp;96%; <code>z_misc_general</code>&nbsp;2%; <code>vishhnu</code>&nbsp;1%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>otherforms</code></td><td style="padding:2px 12px 2px 0; text-align:right;">155</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>devii</code>&nbsp;99%; <code>veda</code>&nbsp;1%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>advice</code></td><td style="padding:2px 12px 2px 0; text-align:right;">154</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>shiva</code>&nbsp;79%; <code>z_misc_general</code>&nbsp;9%; <code>raama</code>&nbsp;3%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>vedanta</code></td><td style="padding:2px 12px 2px 0; text-align:right;">151</td><td style="padding:2px 12px 2px 0; text-align:right;">12</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;24%; <code>z_misc_general</code>&nbsp;21%; <code>z_misc_shankara</code>&nbsp;19%; <span style="opacity:.6;">+9 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>lakshmi</code></td><td style="padding:2px 12px 2px 0; text-align:right;">148</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>devii</code>&nbsp;81%; <code>vishhnu</code>&nbsp;13%; <code>shiva</code>&nbsp;3%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>durga</code></td><td style="padding:2px 12px 2px 0; text-align:right;">143</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>devii</code>&nbsp;99%; <code>subrahmanya</code>&nbsp;1%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>hanumaana</code></td><td style="padding:2px 12px 2px 0; text-align:right;">141</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>hanumaana</code>&nbsp;97%; <code>upanishhat</code>&nbsp;1%; <code>giitaa</code>&nbsp;1%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>gita</code></td><td style="padding:2px 12px 2px 0; text-align:right;">138</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>giitaa</code>&nbsp;96%; <code>z_misc_general</code>&nbsp;1%; <code>ganesha</code>&nbsp;1%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>parvati</code></td><td style="padding:2px 12px 2px 0; text-align:right;">138</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>devii</code>&nbsp;89%; <code>shiva</code>&nbsp;9%; <code>z_misc_general</code>&nbsp;1%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>suprabhata</code></td><td style="padding:2px 12px 2px 0; text-align:right;">137</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;29%; <code>devii</code>&nbsp;24%; <code>deities_misc</code>&nbsp;20%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>puja</code></td><td style="padding:2px 12px 2px 0; text-align:right;">134</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>shiva</code>&nbsp;39%; <code>devii</code>&nbsp;24%; <code>vishhnu</code>&nbsp;7%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>dattatreya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">111</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;92%; <code>giitaa</code>&nbsp;5%; <code>upanishhat</code>&nbsp;3%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>radha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">104</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>devii</code>&nbsp;93%; <code>vishhnu</code>&nbsp;6%; <code>upanishhat</code>&nbsp;1%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>veda</code></td><td style="padding:2px 12px 2px 0; text-align:right;">96</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>veda</code>&nbsp;88%; <code>shiva</code>&nbsp;5%; <code>vishhnu</code>&nbsp;2%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shataka</code></td><td style="padding:2px 12px 2px 0; text-align:right;">94</td><td style="padding:2px 12px 2px 0; text-align:right;">10</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;22%; <code>devii</code>&nbsp;20%; <code>shiva</code>&nbsp;17%; <span style="opacity:.6;">+7 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>arati</code></td><td style="padding:2px 12px 2px 0; text-align:right;">79</td><td style="padding:2px 12px 2px 0; text-align:right;">10</td><td style="padding:2px 0;"><code>devii</code>&nbsp;25%; <code>vishhnu</code>&nbsp;24%; <code>shiva</code>&nbsp;23%; <span style="opacity:.6;">+7 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>stavaraja</code></td><td style="padding:2px 12px 2px 0; text-align:right;">72</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>devii</code>&nbsp;46%; <code>vishhnu</code>&nbsp;18%; <code>deities_misc</code>&nbsp;12%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sukta</code></td><td style="padding:2px 12px 2px 0; text-align:right;">70</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>veda</code>&nbsp;73%; <code>devii</code>&nbsp;16%; <code>deities_misc</code>&nbsp;6%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>purana</code></td><td style="padding:2px 12px 2px 0; text-align:right;">65</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>purana</code>&nbsp;91%; <code>z_misc_general</code>&nbsp;3%; <code>deities_misc</code>&nbsp;3%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>venkateshwara</code></td><td style="padding:2px 12px 2px 0; text-align:right;">63</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>hridaya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">56</td><td style="padding:2px 12px 2px 0; text-align:right;">11</td><td style="padding:2px 0;"><code>devii</code>&nbsp;55%; <code>z_misc_navagraha</code>&nbsp;9%; <code>vishhnu</code>&nbsp;9%; <span style="opacity:.6;">+8 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>pancharatna</code></td><td style="padding:2px 12px 2px 0; text-align:right;">56</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>devii</code>&nbsp;23%; <code>deities_misc</code>&nbsp;20%; <code>shiva</code>&nbsp;18%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ayyappa</code></td><td style="padding:2px 12px 2px 0; text-align:right;">52</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;98%; <code>giitaa</code>&nbsp;2%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sahitya</code></td><td style="padding:2px 12px 2px 0; text-align:right;">52</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>z_misc_general</code>&nbsp;87%; <code>yoga</code>&nbsp;4%; <code>vishhnu</code>&nbsp;4%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>lalita</code></td><td style="padding:2px 12px 2px 0; text-align:right;">49</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>devii</code>&nbsp;96%; <code>shiva</code>&nbsp;2%; <code>upanishhat</code>&nbsp;2%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>gayatri</code></td><td style="padding:2px 12px 2px 0; text-align:right;">48</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>devii</code>&nbsp;94%; <code>upanishhat</code>&nbsp;2%; <code>vishhnu</code>&nbsp;2%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>bhujanga</code></td><td style="padding:2px 12px 2px 0; text-align:right;">45</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>devii</code>&nbsp;22%; <code>vishhnu</code>&nbsp;22%; <code>subrahmanya</code>&nbsp;18%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>malamantra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">40</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>devii</code>&nbsp;25%; <code>vishhnu</code>&nbsp;22%; <code>deities_misc</code>&nbsp;15%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shatkam</code></td><td style="padding:2px 12px 2px 0; text-align:right;">39</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;18%; <code>devii</code>&nbsp;18%; <code>vishhnu</code>&nbsp;15%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shatchakrashakti</code></td><td style="padding:2px 12px 2px 0; text-align:right;">36</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>devii</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>kriti</code></td><td style="padding:2px 12px 2px 0; text-align:right;">33</td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 0;"><code>devii</code>&nbsp;21%; <code>deities_misc</code>&nbsp;18%; <code>shiva</code>&nbsp;18%; <span style="opacity:.6;">+6 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>trishati</code></td><td style="padding:2px 12px 2px 0; text-align:right;">33</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>devii</code>&nbsp;45%; <code>ganesha</code>&nbsp;21%; <code>subrahmanya</code>&nbsp;18%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>yoga</code></td><td style="padding:2px 12px 2px 0; text-align:right;">33</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>yoga</code>&nbsp;76%; <code>shiva</code>&nbsp;9%; <code>upanishhat</code>&nbsp;6%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>raksha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">30</td><td style="padding:2px 12px 2px 0; text-align:right;">10</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;23%; <code>shiva</code>&nbsp;23%; <code>deities_misc</code>&nbsp;13%; <span style="opacity:.6;">+7 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>kalidasa</code></td><td style="padding:2px 12px 2px 0; text-align:right;">29</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;83%; <code>devii</code>&nbsp;17%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>lahari</code></td><td style="padding:2px 12px 2px 0; text-align:right;">29</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>devii</code>&nbsp;55%; <code>z_misc_major_works</code>&nbsp;10%; <code>deities_misc</code>&nbsp;10%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>vishnu_misc</code></td><td style="padding:2px 12px 2px 0; text-align:right;">29</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>vishhnu</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>tulasi</code></td><td style="padding:2px 12px 2px 0; text-align:right;">28</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>devii</code>&nbsp;86%; <code>vishhnu</code>&nbsp;7%; <code>giitaa</code>&nbsp;4%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shatinamavali</code></td><td style="padding:2px 12px 2px 0; text-align:right;">27</td><td style="padding:2px 12px 2px 0; text-align:right;">6</td><td style="padding:2px 0;"><code>devii</code>&nbsp;33%; <code>shiva</code>&nbsp;19%; <code>subrahmanya</code>&nbsp;15%; <span style="opacity:.6;">+3 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>jyotisha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">26</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>z_misc_sociology_astrology</code>&nbsp;96%; <code>shiva</code>&nbsp;4%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>kamakshi</code></td><td style="padding:2px 12px 2px 0; text-align:right;">26</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>devii</code>&nbsp;96%; <code>z_misc_general</code>&nbsp;4%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>subhaashita</code></td><td style="padding:2px 12px 2px 0; text-align:right;">26</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>z_misc_general</code>&nbsp;50%; <code>z_misc_subhaashita</code>&nbsp;38%; <code>z_misc_major_works</code>&nbsp;12%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>gitam</code></td><td style="padding:2px 12px 2px 0; text-align:right;">22</td><td style="padding:2px 12px 2px 0; text-align:right;">7</td><td style="padding:2px 0;"><code>giitaa</code>&nbsp;59%; <code>shiva</code>&nbsp;9%; <code>raama</code>&nbsp;9%; <span style="opacity:.6;">+4 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>renuka</code></td><td style="padding:2px 12px 2px 0; text-align:right;">20</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>devii</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>ekashloki</code></td><td style="padding:2px 12px 2px 0; text-align:right;">18</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>z_misc_general</code>&nbsp;28%; <code>z_misc_navagraha</code>&nbsp;22%; <code>raama</code>&nbsp;22%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>minakshi</code></td><td style="padding:2px 12px 2px 0; text-align:right;">16</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>devii</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>sutra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">16</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;50%; <code>shiva</code>&nbsp;25%; <code>devii</code>&nbsp;12%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>tantra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">16</td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 0;"><code>devii</code>&nbsp;56%; <code>subrahmanya</code>&nbsp;6%; <code>z_misc_general</code>&nbsp;6%; <span style="opacity:.6;">+5 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>bhagavadgita</code></td><td style="padding:2px 12px 2px 0; text-align:right;">12</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>giitaa</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>atharvashirsha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">9</td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;22%; <code>upanishhat</code>&nbsp;22%; <code>ganesha</code>&nbsp;22%; <span style="opacity:.6;">+2 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>adhyatmaramayana</code></td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>raama</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>bhajana</code></td><td style="padding:2px 12px 2px 0; text-align:right;">8</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>deities_misc</code>&nbsp;75%; <code>vishhnu</code>&nbsp;12%; <code>raama</code>&nbsp;12%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>varnamala</code></td><td style="padding:2px 12px 2px 0; text-align:right;">7</td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 0;"><code>shiva</code>&nbsp;57%; <code>devii</code>&nbsp;14%; <code>raama</code>&nbsp;14%; <span style="opacity:.6;">+1 more</span></td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>aparadhakshama</code></td><td style="padding:2px 12px 2px 0; text-align:right;">5</td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 0;"><code>devii</code>&nbsp;40%; <code>deities_misc</code>&nbsp;40%; <code>ganesha</code>&nbsp;20%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>shloka</code></td><td style="padding:2px 12px 2px 0; text-align:right;">4</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>z_misc_general</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>aksharamala</code></td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 0;"><code>shiva</code>&nbsp;67%; <code>devii</code>&nbsp;33%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>amarakosha</code></td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>natyashastra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">3</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>z_misc_major_works</code>&nbsp;100%</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>samajashastra</code></td><td style="padding:2px 12px 2px 0; text-align:right;">2</td><td style="padding:2px 12px 2px 0; text-align:right;">1</td><td style="padding:2px 0;"><code>z_misc_sociology_astrology</code>&nbsp;100%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          </details></li>
+        </ul>
+        <!-- TOPIC_FOLDERS:END -->
+
+        <p>
+          That is, unlike folders, which possess documents exclusively,
+          topics link to them promiscuously.
+          A given document appears on one to <span data-stat="max_topics">9</span> topic pages,
+          <span data-stat="mean_topics">2.08</span> on average.
+          For example, <em>Śivāṣṭakam</em> is on both
+          <code>/sanskrit/shiva/</code> and <code>/sanskrit/ashtaka/</code>.
+        </p>
+
+        <h3 id="categories">Categories</h3>
+        <p>
+          Each document also carries a comma-separated <code>Category</code> line
+          in the metadata block at the foot of its page, with
+          <span data-stat="mean_categories">2.88</span> values on average.
+          There are <span data-stat="raw_spellings">366</span> total distinct values across all documents.
+          It is tempting to read this as yet another load-bearing site structure.
+          <strong>It is not.</strong> These categories are plain text at the bottom of a document.
+        </p>
+        <p>
+          After spelling normalization (see <a>below</a>),
+          <strong><span data-stat="categories_unique">317</span></strong> unique categories remain.
+          Virtually any concept is fair game:
+          genres like <code>stuti</code> or <code>nAmAvalI</code>;
+          persons like <code>shrIdharasvAmI</code> or <code>vAsudevAnanda-sarasvatI</code> (authors),
+          or <code>hkmeher</code> (a contributor);
+          works like <code>shivarahasya</code> (entire)
+          or <code>skandapurANa</code> or <code>mudgalapurANa</code> (extract sources).
+        </p>
+        <p>
+          Similar to how <strong><span data-stat="folders_nonmisc">13</span></strong> topics share a name with a folder,
+          <strong><span data-stat="categories_matching_a_topic">85</span></strong> categories shadow a topic;
+          as one might expect, nearly all the documents linked from a given topic carry the corresponding category value.
+          The remaining <strong><span data-stat="categories_not_matching_a_topic">232</span></strong> categories
+          that do not match a topic name can be thought of as proto-topics
+          which could be promoted to have a full topic page of their own at any time.
+          The most common example of this latter category type,
+          <code><span data-stat="category_not_matching_a_topic_top_name">shivarahasya</span></code>,
+          is used to tag no fewer than <span data-stat="category_not_matching_a_topic_top_count">784</span> documents.
+        </p>
+
+        <h3 id="metadata-fields">Metadata Fields</h3>
+        <p>
+          There are <span data-stat="metadata_fields">17</span> metadata fields,
+          but not every document uses every field.
+        </p>
+        <ul style="list-style: none; padding-left: 0; margin: 0;">
+          <!-- The table's counts and percentages carry data-stat tags and are rewritten by
+               `python -m pipeline.audit --update-about`; edit the tag, not the digits.
+               Rows are fixed to COVERAGE_FIELDS in pipeline/audit.py -- add a field there
+               and give it a row here, or the run fails rather than publishing a stale table. -->
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Metadata field coverage</span></summary>
+          <div style="overflow-x:auto;">
+            <table style="border-collapse:collapse; font-size:13px; margin:0 0 4px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="padding:2px 12px 2px 0; text-align:left;">field</th>
+                  <th style="padding:2px 12px 2px 0; text-align:right;">documents</th>
+                  <th style="padding:2px 24px 2px 0; text-align:right;">coverage</th>
+                  <th style="padding:2px 0; text-align:left;">what it holds</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding:2px 12px 2px 0;"><code>title</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_title">9,756</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_title">100.0</span>%</td><td style="padding:2px 0;">The English label at the head of every document page.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>language</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_language">9,756</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_language">100.0</span>%</td><td style="padding:2px 0;">Sanskrit for all but a hundred or so.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>categories</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_categories">9,756</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_categories">100.0</span>%</td><td style="padding:2px 0;">The free-text tag bag.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>title_deva</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_title_deva">9,680</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_title_deva">99.2</span>%</td><td style="padding:2px 0;">The Devanāgarī title — the only field that can be transliterated.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>latest_update</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_latest_update">9,752</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_latest_update">100.0</span>%</td><td style="padding:2px 0;">A free-text date string.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>subject</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_subject">9,744</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_subject">99.9</span>%</td><td style="padding:2px 0;">Mostly just "philosophy/hinduism/religion," not helpful.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>proofread_by</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_proofread_by">8,569</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_proofread_by">87.8</span>%</td><td style="padding:2px 0;">The sole name on most documents that carry it, so ostensibly the inputter.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>indexextra</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_indexextra">7,932</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_indexextra">81.3</span>%</td><td style="padding:2px 0;">The parenthetical HTML links (archive.org scans, etc.)</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>description</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_description">6,178</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_description">63.3</span>%</td><td style="padding:2px 0;">A free-text note, often naming the source edition.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>transliterated_by</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_transliterated_by">4,335</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_transliterated_by">44.4</span>%</td><td style="padding:2px 0;">Ostensibly who converted to ITRANS, usually same as <code>proofread_by</code>.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>author</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_author">3,677</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_author">37.7</span>%</td><td style="padding:2px 0;">Free-text names, missing even for many works whose author is well known.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>subdeity</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_subdeity">3,539</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_subdeity">36.3</span>%</td><td style="padding:2px 0;">Deity divisions (e.g. <code>krishna</code>, <code>gurudev</code>) within folders (e.g., <code>doc_vishhnu</code>.)</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>acknowledge_permission</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_acknowledge_permission">1,474</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_acknowledge_permission">15.1</span>%</td><td style="padding:2px 0;">Whose permission the reproduction rests on, where the site names one.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>texttype</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_texttype">1,465</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_texttype">15.0</span>%</td><td style="padding:2px 0;">An unhelpful free-text genre tag.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>source</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_source">528</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_source">5.4</span>%</td><td style="padding:2px 0;">The printed edition or URL the text was taken from.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>translated_by</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_translated_by">321</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_translated_by">3.3</span>%</td><td style="padding:2px 0;">Translator name, for some docs containing translation.</td></tr>
+                <tr><td style="padding:2px 12px 2px 0;"><code>subcategory</code></td><td style="padding:2px 12px 2px 0; text-align:right;"><span data-stat="cov_subcategory">125</span></td><td style="padding:2px 24px 2px 0; text-align:right;"><span data-stat="covpct_subcategory">1.3</span>%</td><td style="padding:2px 0;">A rare second tag under category.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          </details></li>
+        </ul>
+        <p>
+          The two fields <code>subject</code> and <code>texttype</code>
+          are worth distinguishing from <code>category</code>.
+          <code>subject</code>, where it is used,
+          carries the single value "philosophy/hinduism/religion"
+          <span data-stat="subject_top_pct">92.3</span>% of the time,
+          and nearly all the rest are permutations of those same three words.
+          As for <code>texttype</code>, it basically just restates information
+          <code>categories</code> already covers, but more coarsely.
+          In short, neither is useful.
+        </p>
+        <p>
+          No field clearly states who first input a text.
+          <code>proofread_by</code> is the sole name on <span data-stat="credit_sole">4,395</span> documents,
+          and someone must have input every document,
+          so it seems reasonable to read this as the inputter, not just a checker.
+          <code>transliterated_by</code> then appears to be a second hand where one was involved;
+          of the <span data-stat="credit_both">4,174</span> documents with both fields,
+          <span data-stat="credit_same_pct">85.7</span>% name the same person twice.
+        </p>
+        
+        <h3 id="scanned-sources">Scanned Sources</h3>
+        <p>
+          On topic and folder pages, many document lines include parentheticals with links,
+          and some of these links lead to scans (PDFs) hosted in various places:
+          archive.org (most common),
+          other third-party sites (less common),
+          or the server's own <code>/scannedbooks/</code> route (least common).
+        </p>
+        <p>
+          A linked scan is <strong>not</strong> necessarily the exemplar the e-text was encoded from.
+          The site itself makes no such claim.
+          However, many of them do seem to match.
+          User beware.
+        </p>
+        <p>
+          Of the external links likely to be exemplar matches,
+          <span data-stat="scan_links">5,535</span> links across
+          <span data-stat="scan_docs">5,501</span> documents
+          reduce to <strong><span data-stat="scans_live">873</span></strong> distinct sources
+          which can survive a liveness check;
+          <span data-stat="dead_scans">117</span> other such scan links are broken.
+        </p>
+
+        <h3 id="transliteration-and-generated-pdfs">Transliteration and Generated PDFs</h3>
+        <p>
+          Each item is stored as an ITRANS plaintext original
+          (conventionally using the <code>.itx</code> filename extension).
+          From there, it is rendered automatically into HTML,
+          with transliteration into different schemes performed by
+          <a href="https://aksharamukha.js.org/" target="_blank">Aksaramukha.js</a> —
+          except on <span data-stat="legacy_translit">74</span> legacy pages
+          still served by an older Sanscript-based transliterator stack
+          (<code>sanscript-vedic.js</code> + <code>sanskritdocuments-transliterator-vedic.js</code>).
+          This transformed HTML can be printed to PDF using a "Print" link on the document page.
+        </p>
+        <p>
+          In addition, nearly every document on the site is also published as
+          a series of formatted, static PDFs containing the same content transliterated with
+          <a href="https://www.learnsanskrit.org/tools/sanscript/" target="_blank">sanscript</a>
+          in five specific Indic scripts: Devanagari, Tamil, Telugu, Kannada, and Gujarati.
+          The prominent "PDF" icons on the site are all these,
+          and they are purely derivative and for reading convenience.
+          They should be sharply distinguished from the more philologically significant links to scanned sources.
+        </p>
+
+        <h3 id="names">Three Names per Document, and Only One Transliterates</h3>
+        <p>
+          Every document carries up to three distinct forms of its own name, and
+          they do not agree: a free-text <strong>English label</strong>
+          (<code>Akshara Ramayanam</code> — ad hoc Romanization, no scheme, no
+          diacritics), a proper <strong>Devanāgarī</strong> title
+          (<code>अक्षररामायणम्</code>), and the
+          filename stem (<code>akShararAmAyaNam</code>), which <em>looks</em>
+          like ITRANS but isn't.
+        </p>
+
+        <h3 id="language">Language</h3>
+        <p>
+          The collection is <strong>overwhelmingly Sanskrit</strong>:
+          <span data-stat="sanskrit">9,646</span> of
+          <span data-stat="total">9,756</span> documents are marked so
+          (<span data-stat="sanskrit_pct">98.9</span>%), with the
+          remainder mostly Hindi and Marathi, plus a handful of Gujarati and
+          mixed entries. <span data-stat="languages">14</span>
+          distinct language strings appear in all.
+        </p>
+      </details>
+
+      <details class="block collapsible">
+        <summary><h2 id="obtaining-and-representing">Obtaining and Representing Sanskrit Documents Data</h2></summary>
+
+        <h3 id="scraping">Scraping</h3>
+        <p>
+          The atlas is built from a snapshot periodically scraped from the site:
+          about 10,000 requests, one request every two seconds, approximately six hours.
+          There are four steps:
+        </p>
+        <ol>
+          <li>Fetch <strong>1</strong> sitemap and parse for <span data-stat="topic_pages_published">87</span> topic pages.</li>
+          <li>Fetch <span data-stat="topic_pages_published">87</span> topic pages and parse for <span data-stat="catalogue">9,781</span> document pages (and from their paths, <span data-stat="folders">20</span> folder pages)</li>
+          <li>Fetch <span data-stat="folders">20</span> folder pages (for audit/corroboration purposes only).</li>
+          <li>Fetch <span data-stat="catalogue">9,781</span> document pages.</li>
+        </ol>
+        <p>
+          <strong><span data-stat="total">9,756</span> documents are held here
+          against the <span data-stat="catalogue">9,781</span> the site's own
+          topics name</strong>, as the site served them on
+          <span data-stat="corpus_date">2026-08-15</span>. The shortfall is
+          <span data-stat="missing">25</span> dead pages which 404 on the site;
+          each is named under <a href="#data-quality">Data Quality</a> below.
+        </p>
+
+        <h3 id="atlas-folders-topics-categories">Folders, Topics, and Categories</h3>
+        <p>
+          The Atlas presents folders and topics as two alternative browsing methods.
+          The <span data-stat="topic_pages_suppressed">2</span> redundant topics —
+          <span data-stat="topic_pages_suppressed_names">/sanskrit/giitaa/ and /sanskrit/vishhnu/</span> —
+          are suppressed in favor of
+          <span data-stat="topic_pages_suppressed_kept">/sanskrit/gita/ and /sanskrit/vishnu/</span>.
+        </p>
+        <p>
+          Unlike the source site, the Atlas also presents categories as a usable filter,
+          which can optionally be overlaid on either of the two browsing methods.
+          For this purpose, spelling irregularities in category values are normalized.
+          Some normalization is easy:
+          <code>dvAdhasha</code>, <code>pAravtI</code>, and <code>kavaha</code> are outright typos,
+          and it's clear what to merge them into.
+          Similarly, alternate transliterations <code>devI</code>, <code>devi</code> and <code>devii</code>,
+          or <code>upanishad</code>, <code>upanishhat</code>, and <code>upaniShat</code> are easily merged.
+          Some normalization is trickier:
+          <code>vishhnu</code> can merge into <code>vishnu</code>, but <code>vishnu_misc</code> is distinct.
+          Similarly, <code>gItA</code> can merge into <code>giitaa</code>, but <code>gitam</code> is distinct.
+        </p>
+
+      <h3 id="calculating-size">Calculating Size</h3>
+        <p>
+          The source site does not report sizes.
+          The Atlas calculates a number for each page by taking
+          only the <code>&lt;pre&gt;</code> block —
+          excluding site navigation elements and also the metadata block —
+          and transliterating its contents to IAST.
+        </p>
+        <p>
+          Most of the corpus consists of small documents:
+          the median document is about
+          <span data-stat="median_kb">2.7</span>&nbsp;KB, while the
+          <span class="sa-cap">पुराण</span>s and Monier-Williams run past 2&nbsp;MB
+          each, so just <span data-stat="heaviest">14</span> texts carry a sixth
+          of the total <span data-stat="iast_mb">126.5</span>&nbsp;MB.
+        </p>
+        <p>
+          Since folders are mutually exclusive in their contents,
+          their respective totals add up to the grand total without complication.
+          By contrast, topics are overlapping in their contents,
+          so their respective totals are simply not used to calculate
+          the grand total.
+        </p>
+
+      </details>
+
+      <details class="block collapsible">
+        <summary><h2 id="data-quality">Data Quality: Structural Errors</h2></summary>
+
+        <!-- AUDIT:START -- generated by `python -m pipeline.audit --update-about`; do not hand-edit between these markers -->
+        <h3 id="opportunities-for-correction">Opportunities for Correction</h3>
+        <p>
+          The Atlas codebase also includes an audit pipeline for
+          detecting and concisely indicating problems that should be fixed on
+          sanskritdocuments.org. Every figure below is re-derived by the run
+          that publishes it.
+        </p>
+        <ul style="list-style: none; padding-left: 0;">
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Topic pages the site duplicates (2 pages)</span></summary>
+          <p style="margin-left: 1.6em;">The site publishes these as separate topic pages, but each says nothing its counterpart does not. The tree shows the one named second; these names reach it too.</p>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/sanskrit/giitaa/" target="_blank" rel="noopener"><code>giitaa</code></a> — strict subset (135 of 138) of <a href="https://sanskritdocuments.org/sanskrit/gita/" target="_blank" rel="noopener"><code>gita</code></a></li>
+            <li><a href="https://sanskritdocuments.org/sanskrit/vishhnu/" target="_blank" rel="noopener"><code>vishhnu</code></a> — byte-identical copy of <a href="https://sanskritdocuments.org/sanskrit/vishnu/" target="_blank" rel="noopener"><code>vishnu</code></a></li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Documents listed but no longer served (25 documents)</span></summary>
+          <p style="margin-left: 1.6em;">The site's own indexes link each of these, but requesting it returns 404. All 25 are linked from a topic page (<code>/sanskrit/&lt;slug&gt;/</code>) as well as from their folder page, so both of the site's indexes carry the same dead entries.</p>
+          <ul style="margin-left: 1.6em; list-style: none; padding-left: 0;">
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_vishhnu</code> (10)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/dakShiNAsheShAchaleshashrInivAsabhagavanmangalam.html" target="_blank" rel="noopener">dakShiNAsheShAchaleshashrInivAsabhagavanmangalam</a> — also on <code>venkateshwara</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/dakShiNAsheShAchaleshashrInivAsabhagavatprapattiH.html" target="_blank" rel="noopener">dakShiNAsheShAchaleshashrInivAsabhagavatprapattiH</a> — also on <code>venkateshwara</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/dakShiNAsheShAchaleshashrInivAsabhagavatstotram.html" target="_blank" rel="noopener">dakShiNAsheShAchaleshashrInivAsabhagavatstotram</a> — also on <code>stotra</code>, <code>venkateshwara</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/dakShiNAsheShAchaleshashrInivAsabhagavatsuprabhAtam.html" target="_blank" rel="noopener">dakShiNAsheShAchaleshashrInivAsabhagavatsuprabhAtam</a> — also on <code>suprabhata</code>, <code>venkateshwara</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/kRRiShNagAyatrImahAmantraH.html" target="_blank" rel="noopener">kRRiShNagAyatrImahAmantraH</a> — also on <code>krishna</code>, <code>mantra</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/kodaNDapANistotraM.html" target="_blank" rel="noopener">kodaNDapANistotraM</a> — also on <code>stotra</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/prArthanApanchakam.html" target="_blank" rel="noopener">prArthanApanchakam</a> — also on <code>krishna</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/shANDilyakRRitaharistotram.html" target="_blank" rel="noopener">shANDilyakRRitaharistotram</a> — also on <code>stotra</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/stavAvalI.html" target="_blank" rel="noopener">stavAvalI</a> — also on <code>krishna</code>, <code>vishnu</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/viShNustotraMdevakIkRRitaM2.html" target="_blank" rel="noopener">viShNustotraMdevakIkRRitaM2</a> — also on <code>stotra</code>, <code>vishnu</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_deities_misc</code> (7)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/IshvaradhyAnamanjarIH.html" target="_blank" rel="noopener">IshvaradhyAnamanjarIH</a> — also on <code>deities_misc</code>, <code>shankaracharya</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/chandrashekharendrasarasvatIchaturdashamanjarikA.html" target="_blank" rel="noopener">chandrashekharendrasarasvatIchaturdashamanjarikA</a> — also on <code>deities_misc</code>, <code>gurudev</code>, <code>stotra</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/jayendrasarasvatItoTakAShTakam1.html" target="_blank" rel="noopener">jayendrasarasvatItoTakAShTakam1</a> — also on <code>ashtaka</code>, <code>deities_misc</code>, <code>gurudev</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurumangalAShTakam3.html" target="_blank" rel="noopener">sadgurumangalAShTakam3</a> — also on <code>ashtaka</code>, <code>deities_misc</code>, <code>gurudev</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/shrImantramAtRRikAShTakam.html" target="_blank" rel="noopener">shrImantramAtRRikAShTakam</a> — also on <code>ashtaka</code>, <code>ayyappa</code>, <code>deities_misc</code>, <code>mantra</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/shrInivAsAchAryachatushshlokI.html" target="_blank" rel="noopener">shrInivAsAchAryachatushshlokI</a> — also on <code>deities_misc</code>, <code>gurudev</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sphuTalekhAHdurgAsharmA.html" target="_blank" rel="noopener">sphuTalekhAHdurgAsharmA</a> — also on <code>dattatreya</code>, <code>deities_misc</code>, <code>mantra</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_z_misc_general</code> (3)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_z_misc_general/gharagharasanskRRitakAprachAra ho.html" target="_blank" rel="noopener">gharagharasanskRRitakAprachAra ho</a> — also on <code>misc</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_z_misc_general/jarjabakaledarshanasamIkShaNam.html" target="_blank" rel="noopener">jarjabakaledarshanasamIkShaNam</a> — also on <code>misc</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_z_misc_general/mahAbhAratagranthakavachamvAlmIkikRRitam.inf.html" target="_blank" rel="noopener">mahAbhAratagranthakavachamvAlmIkikRRitam.inf</a> — also on <code>misc</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_devii</code> (2)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_devii/kAmAkhyAmantrakramaHgopanIya.html" target="_blank" rel="noopener">kAmAkhyAmantrakramaHgopanIya</a> — also on <code>devii</code>, <code>kamakshi</code>, <code>mantra</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/kAmAkhyAsahacharamantrakramaHgopanIya.html" target="_blank" rel="noopener">kAmAkhyAsahacharamantrakramaHgopanIya</a> — also on <code>devii</code>, <code>kamakshi</code>, <code>mantra</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_shiva</code> (2)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_shiva/devendrakRRitaMshatarudrIyaMnAmashivastotram.html" target="_blank" rel="noopener">devendrakRRitaMshatarudrIyaMnAmashivastotram</a> — also on <code>shiva</code>, <code>stotra</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_shiva/shivArAdhanamahimAnuvarNanam1.html" target="_blank" rel="noopener">shivArAdhanamahimAnuvarNanam1</a> — also on <code>shiva</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span><code>doc_subrahmanya</code> (1)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_subrahmanya/subrahmaNyaShaDashAkSharamantraH2.html" target="_blank" rel="noopener">subrahmaNyaShaDashAkSharamantraH2</a> — also on <code>mantra</code>, <code>subrahmanya</code></li>
+          </ul>
+</details></li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Malformed links in the catalogue (2 entries)</span></summary>
+          <p style="margin-left: 1.6em;">Bad hrefs on the site's own topic pages — a literal space in a path, and a <code>.inf</code> target that is not a document.</p>
+          <ul style="margin-left: 1.6em;">
+            <li><code>doc_z_misc_general/gharagharasanskRRitakAprachAra ho</code></li>
+            <li><code>doc_z_misc_general/mahAbhAratagranthakavachamvAlmIkikRRitam.inf</code></li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Documents without a given Devanāgarī title (76 documents)</span></summary>
+          <p style="margin-left: 1.6em;">Only <code>title_deva</code> can be transliterated — the English label and the filename stem are both ad-hoc romanization — so a document without one cannot render in a reader's chosen script. These pages carry no Devanāgarī title; the atlas shows an approximation rebuilt from the filename, which is lossy where the site's spelling cannot express a sound.</p>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/aparAdhakShamA.html" target="_blank" rel="noopener">aparAdhakShamA</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/dayAnandAShTakam.html" target="_blank" rel="noopener">dayAnandAShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/dayAnandadashakam.html" target="_blank" rel="noopener">dayAnandadashakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/dayAnandamangalAShTakam.html" target="_blank" rel="noopener">dayAnandamangalAShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/dayAnandapanchakamPS.html" target="_blank" rel="noopener">dayAnandapanchakamPS</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/dayAnandasaptakam.html" target="_blank" rel="noopener">dayAnandasaptakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/gurustutipramANikA.html" target="_blank" rel="noopener">gurustutipramANikA</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/guruvandanam.html" target="_blank" rel="noopener">guruvandanam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/himAlayagadyam.html" target="_blank" rel="noopener">himAlayagadyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/himAlayastuti.html" target="_blank" rel="noopener">himAlayastuti</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/panchanadagadyam.html" target="_blank" rel="noopener">panchanadagadyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurumangalAShTakam.html" target="_blank" rel="noopener">sadgurumangalAShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurumangalAShTakam2.html" target="_blank" rel="noopener">sadgurumangalAShTakam2</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmAShTottarashatanAmAvaliH.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmAShTottarashatanAmAvaliH</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmabhujangaprayAtastotram.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmabhujangaprayAtastotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmamangalAShTakam.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmamangalAShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmapanchashatI.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmapanchashatI</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmasahasranAmAvalI.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmasahasranAmAvalI</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmasharaNAgatigadyam.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmasharaNAgatigadyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmasharaNAgatistotram.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmasharaNAgatistotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurushrItyAgabrahmatrishatI.html" target="_blank" rel="noopener">sadgurushrItyAgabrahmatrishatI</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sadgurutyAgarAjAShTakam.html" target="_blank" rel="noopener">sadgurutyAgarAjAShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/sangItagadyam.html" target="_blank" rel="noopener">sangItagadyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/saptasvarAlAsyam.html" target="_blank" rel="noopener">saptasvarAlAsyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tArAnandagurvaShTakam.html" target="_blank" rel="noopener">tArAnandagurvaShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmagurvaShTakam.html" target="_blank" rel="noopener">tyAgabrahmagurvaShTakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmaprapattistutiH.html" target="_blank" rel="noopener">tyAgabrahmaprapattistutiH</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmapuShpAnjalI.html" target="_blank" rel="noopener">tyAgabrahmapuShpAnjalI</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmasahasrakam1.html" target="_blank" rel="noopener">tyAgabrahmasahasrakam1</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmasahasrakam1merged.html" target="_blank" rel="noopener">tyAgabrahmasahasrakam1merged</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmasahasrakam2.html" target="_blank" rel="noopener">tyAgabrahmasahasrakam2</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmasahasrakam2merged.html" target="_blank" rel="noopener">tyAgabrahmasahasrakam2merged</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgabrahmasaptashatI.html" target="_blank" rel="noopener">tyAgabrahmasaptashatI</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgarAjasvAmisuprabhAtam.html" target="_blank" rel="noopener">tyAgarAjasvAmisuprabhAtam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/tyAgarAmagadyam.html" target="_blank" rel="noopener">tyAgarAmagadyam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/aShTAdashamahAlakShmIstotram.html" target="_blank" rel="noopener">aShTAdashamahAlakShmIstotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/dharmasaMvardhanIstotram.html" target="_blank" rel="noopener">dharmasaMvardhanIstotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/durgAstotram7.html" target="_blank" rel="noopener">durgAstotram7</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/gangAdashakam.html" target="_blank" rel="noopener">gangAdashakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/gangApramANikA.html" target="_blank" rel="noopener">gangApramANikA</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/gangAsahasram.html" target="_blank" rel="noopener">gangAsahasram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/jyotirlakShmIstotram.html" target="_blank" rel="noopener">jyotirlakShmIstotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/kamalAmbAnavAvaraNastotram.html" target="_blank" rel="noopener">kamalAmbAnavAvaraNastotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/kamalAmbApanchadashAkSharIstotram.html" target="_blank" rel="noopener">kamalAmbApanchadashAkSharIstotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/khagangAbhujangaprayAtam.html" target="_blank" rel="noopener">khagangAbhujangaprayAtam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/mAtRipanchakam.html" target="_blank" rel="noopener">mAtRipanchakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/mahalakshmIstotramPS.html" target="_blank" rel="noopener">mahalakshmIstotramPS</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sItAlakShmIpanchakam.html" target="_blank" rel="noopener">sItAlakShmIpanchakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sItAlakShmIstotram.html" target="_blank" rel="noopener">sItAlakShmIstotram</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sItArAmastava.html" target="_blank" rel="noopener">sItArAmastava</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sarasvatImAnasapUjA.html" target="_blank" rel="noopener">sarasvatImAnasapUjA</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sarasvatIstotramPS.html" target="_blank" rel="noopener">sarasvatIstotramPS</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/shrIvidyAstotramPS.html" target="_blank" rel="noopener">shrIvidyAstotramPS</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/siddhasarasvatIstotram2.html" target="_blank" rel="noopener">siddhasarasvatIstotram2</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_ganesha/gaNeshadvAdashastotramPS.html" target="_blank" rel="noopener">gaNeshadvAdashastotramPS</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_ganesha/gaNeshapanchakam.html" target="_blank" rel="noopener">gaNeshapanchakam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_ganesha/gaNeshvarapramANikA.html" target="_blank" rel="noopener">gaNeshvarapramANikA</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_hanumaana/Anjaneyabhujangam.html" target="_blank" rel="noopener">Anjaneyabhujangam</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_hanumaana/hanumatstavaH.html" target="_blank" rel="noopener">hanumatstavaH</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_raama/rAmAyaNasArashrIrAmastotram.html" target="_blank" rel="noopener">rAmAyaNasArashrIrAmastotram</a></li>
+            <li><em>… and 16 more</em></li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Documents with no usable date (9 documents)</span></summary>
+          <p style="margin-left: 1.6em;"><em>Latest update</em> is the only date the corpus carries about itself, and on these it is blank or unreadable.</p>
+          <ul style="margin-left: 1.6em; list-style: none; padding-left: 0;">
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span>corrupt (5)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_devii/bhadrakAlIkavacham2.html" target="_blank" rel="noopener">bhadrakAlIkavacham2</a> — <code>September 2</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/laxmi1000.html" target="_blank" rel="noopener">laxmi1000</a> — <code>August 22</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/sarasvatistotra.html" target="_blank" rel="noopener">sarasvatistotra</a> — <code>April 4, 20R2613</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_shiva/sharabhasahasranAmastotra.html" target="_blank" rel="noopener">sharabhasahasranAmastotra</a> — <code>August 22</code></li>
+            <li><a href="https://sanskritdocuments.org/doc_veda/sangyaanasuukta.html" target="_blank" rel="noopener">sangyaanasuukta</a> — <code>RFebruary 20, 2025</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span>blank (4)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/suryanamaskArmantra.html" target="_blank" rel="noopener">suryanamaskArmantra</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_shiva/shivamangalAShTaka.html" target="_blank" rel="noopener">shivamangalAShTaka</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_z_misc_shankara/ekashloki.html" target="_blank" rel="noopener">ekashloki</a></li>
+            <li><a href="https://sanskritdocuments.org/doc_z_misc_subhaashita/subhash.html" target="_blank" rel="noopener">subhash</a></li>
+          </ul>
+</details></li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Documents missing download formats (3 documents)</span></summary>
+          <p style="margin-left: 1.6em;">Nearly every document is published as its ITX source plus five generated PDFs. The one at 3 of 7 is short of the set; the two at 0 of 7 are metadata-only pages with no text to generate anything from.</p>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/doc_deities_misc/balarAmasahasranAmastotra.html" target="_blank" rel="noopener">balarAmasahasranAmastotra</a> — 3 of 7</li>
+            <li><a href="https://sanskritdocuments.org/doc_devii/siddhasarasvatIstotram2.html" target="_blank" rel="noopener">siddhasarasvatIstotram2</a> — 0 of 7</li>
+            <li><a href="https://sanskritdocuments.org/doc_vishhnu/viShNorapAmArjanastotram.html" target="_blank" rel="noopener">viShNorapAmArjanastotram</a> — 0 of 7</li>
+          </ul>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Scanned sources that no longer resolve (117 books)</span></summary>
+          <p style="margin-left: 1.6em;">Counted by book, not by link: these 117 dead sources strand 338 links across 335 documents, because the dead ones are disproportionately heavily-cited anthologies. Checked August 2026.</p>
+          <ul style="margin-left: 1.6em; list-style: none; padding-left: 0;">
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span>archive (73)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://archive.org/details/AshtavakraGita_201708" target="_blank" rel="noopener">archive.org/details/AshtavakraGita_201708</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/AyyappaPrayerBookMalayalam" target="_blank" rel="noopener">archive.org/details/AyyappaPrayerBookMalayalam</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/BhargavaKavachaParakheM.S." target="_blank" rel="noopener">archive.org/details/BhargavaKavachaParakheM.S.</a> — <code>TimeoutError(&#x27;The read operation timed out&#x27;)</code></li>
+            <li><a href="https://archive.org/details/BhavaniNamaSahasraStutiJanakiNathKaul_201802" target="_blank" rel="noopener">archive.org/details/BhavaniNamaSahasraStutiJanakiNathKaul_201802</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/BhuvaneshwariMahaStotramBook54RajasthanPuratanGranthaMala/Bhuvaneshwari%20Maha%20Stotram%20-%20Book%2054%20Rajasthan%20Puratan%20GranthaMala/page/n139" target="_blank" rel="noopener">archive.org/details/BhuvaneshwariMahaStotramBook54RajasthanPuratanGranthaMala</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/BrahmaVaivartaPuranaIMLBD/page/n287" target="_blank" rel="noopener">archive.org/details/BrahmaVaivartaPuranaIMLBD</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/BrahmaVaivartaPuranaVasudevaShastriMarathePurshottamShastriRanadePart2AnandAshram102/page/n153" target="_blank" rel="noopener">archive.org/details/BrahmaVaivartaPuranaVasudevaShastriMarathePurshottamShastriRanadePart2AnandAshram102</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/DeviPuranaEDMandanMishraCriticalEditionIntroductionMissingOPT" target="_blank" rel="noopener">archive.org/details/DeviPuranaEDMandanMishraCriticalEditionIntroductionMissingOPT</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/DeviStotraRatnakaraGitaPress/page/n0" target="_blank" rel="noopener">archive.org/details/DeviStotraRatnakaraGitaPress</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/DivyaShivaSahasranamStotraBihariLalVasishtha_201710/page/n90/mode/1up" target="_blank" rel="noopener">archive.org/details/DivyaShivaSahasranamStotraBihariLalVasishtha_201710</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/DurgaSapatshatiGitaPressOCR/page/n19" target="_blank" rel="noopener">archive.org/details/DurgaSapatshatiGitaPressOCR</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/DurlabhStotraniCompiledByRadhaRamanDurvar" target="_blank" rel="noopener">archive.org/details/DurlabhStotraniCompiledByRadhaRamanDurvar</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/GambhiraChintanSwamiAkhandanandaSaraswatiArticles/Gambhira%20Chintan%20Swami%20Akhandananda%20Saraswati%20%28Articles%29/page/n317/mode/2up" target="_blank" rel="noopener">archive.org/details/GambhiraChintanSwamiAkhandanandaSaraswatiArticles</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/IndrakshiBhagawatiShriRamShaivaTrikaAshram/page/n17" target="_blank" rel="noopener">archive.org/details/IndrakshiBhagawatiShriRamShaivaTrikaAshram</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/IshaEtc108UpanishadsVasudevLakshmanPansikar/Isha%20Etc%20108%20Upanishads%20-%20Vasudev%20Lakshman%20Pansikar/page/n533/mode/2up" target="_blank" rel="noopener">archive.org/details/IshaEtc108UpanishadsVasudevLakshmanPansikar</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/KaliKalpadruvallariRamaNarayanTripathiSampoornanadUniversity/page/n0" target="_blank" rel="noopener">archive.org/details/KaliKalpadruvallariRamaNarayanTripathiSampoornanadUniversity</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/KavyamalaVol84StavamalaOfRupadeva1903" target="_blank" rel="noopener">archive.org/details/KavyamalaVol84StavamalaOfRupadeva1903</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/LingaPuranaProf.J.L.Shastri/page/n117" target="_blank" rel="noopener">archive.org/details/LingaPuranaProf.J.L.Shastri</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/MahaGanapatiVarivasyaDattatreyaAnandNathTantrikaPujaPaddhati/Maha%20Ganapati%20Varivasya%20Dattatreya%20Anand%20Nath%20%28Tantrika%20Puja%20Paddhati%29/page/n15" target="_blank" rel="noopener">archive.org/details/MahaGanapatiVarivasyaDattatreyaAnandNathTantrikaPujaPaddhati</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/MahaVidyaChatustayamTaraDumavatiBhuvaneshwariMatangiDatiaSwami" target="_blank" rel="noopener">archive.org/details/MahaVidyaChatustayamTaraDumavatiBhuvaneshwariMatangiDatiaSwami</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/Mahabharata04SanskritHindiPanditRamnarayanGitaPress/Mahabharata%2003_%20Sanskrit-Hindi_Pandit%20Ramnarayan_Gita%20Press/page/n621/mode/1up" target="_blank" rel="noopener">archive.org/details/Mahabharata04SanskritHindiPanditRamnarayanGitaPress</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/MahakalaSamhitaGuhyaKaliKhandaPartIIDr.KishorNathJha_201710/Mahakala%20Samhita%20Guhya%20Kali%20Khanda%20Part%20II-%20Dr.%20Kishor%20Nath%20Jha/page/n235/mode/2up" target="_blank" rel="noopener">archive.org/details/MahakalaSamhitaGuhyaKaliKhandaPartIIDr.KishorNathJha_201710</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/MalayamarutaRaghavanV.Vol4VenkateswarUniversity" target="_blank" rel="noopener">archive.org/details/MalayamarutaRaghavanV.Vol4VenkateswarUniversity</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/MalayamarutaVol3VenkateswaraUniversity" target="_blank" rel="noopener">archive.org/details/MalayamarutaVol3VenkateswaraUniversity</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/MudgalaPuranaPothiOrOblong/Mudgala%20Purana%20%28Pothi%20or%20Oblong%29/page/n683/mode/2up" target="_blank" rel="noopener">archive.org/details/MudgalaPuranaPothiOrOblong</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/PujaKalpaOfVadirajaVyasanakerePrabhanjanacharyaDevataArchanaVidhi...." target="_blank" rel="noopener">archive.org/details/PujaKalpaOfVadirajaVyasanakerePrabhanjanacharyaDevataArchanaVidhi....</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/RamMahmnaStotraRamBhadracharya_201710/page/n10" target="_blank" rel="noopener">archive.org/details/RamMahmnaStotraRamBhadracharya_201710</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/RamanaLahariByNarendraKesariUpadhyayaNarendraKesariUpadhyayaRamanaAshram" target="_blank" rel="noopener">archive.org/details/RamanaLahariByNarendraKesariUpadhyayaNarendraKesariUpadhyayaRamanaAshram</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SamskritVyavaharaSaahasreeSL" target="_blank" rel="noopener">archive.org/details/SamskritVyavaharaSaahasreeSL</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SanskritPratibha3.2V.Raghava/page/n13" target="_blank" rel="noopener">archive.org/details/SanskritPratibha3.2V.Raghava</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/SarabhaSaluvaKalpaEd.ShangaraNarayananS.MS/Sarabha%20Saluva%20Kalpa%20Ed.%20Shangara%20Narayanan%20S.%20%28MS%29/page/n7/mode/2up" target="_blank" rel="noopener">archive.org/details/SarabhaSaluvaKalpaEd.ShangaraNarayananS.MS</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SarawatiSushma198687Shankaracharya12thBirthCentennaryIssueSampurnanadaUni_201710/page/n120/mode/1up" target="_blank" rel="noopener">archive.org/details/SarawatiSushma198687Shankaracharya12thBirthCentennaryIssueSampurnanadaUni_201710</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/ShriRamKrishna\-UpadeshSahasriSecondScanSwamiApurvananda" target="_blank" rel="noopener">archive.org/details/ShriRamKrishna\-UpadeshSahasriSecondScanSwamiApurvananda</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/ShriVidyaKhadagMalaScan2KalyanMandirAllahabad/page/n149" target="_blank" rel="noopener">archive.org/details/ShriVidyaKhadagMalaScan2KalyanMandirAllahabad</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/ShriVidyaStavaManjariKulbhushanPanditRamaduttaShukla/page/n31" target="_blank" rel="noopener">archive.org/details/ShriVidyaStavaManjariKulbhushanPanditRamaduttaShukla</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/ShuliniKalpam" target="_blank" rel="noopener">archive.org/details/ShuliniKalpam</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SivaStotraRatnakaraGitaPress/page/n0" target="_blank" rel="noopener">archive.org/details/SivaStotraRatnakaraGitaPress</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SkandaPuranaPranavakalpaParnaKalpaPrakasaBhashyaGangadharendraSarasvatiEd.Dhundi" target="_blank" rel="noopener">archive.org/details/SkandaPuranaPranavakalpaParnaKalpaPrakasaBhashyaGangadharendraSarasvatiEd.Dhundi</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SriBhuvanesvariStavaManjariKulBhushanPt.RamaDutaaShukla" target="_blank" rel="noopener">archive.org/details/SriBhuvanesvariStavaManjariKulBhushanPt.RamaDutaaShukla</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/SriMahesvaraTantramDr.SudhakarMalaviya/page/n50" target="_blank" rel="noopener">archive.org/details/SriMahesvaraTantramDr.SudhakarMalaviya</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/SriVidyaKalpalataRajendraRanjanChaturvediMLBDSriVidya/Sri%20Vidya%20Kalpalata%20%20Rajendra%20Ranjan%20Chaturvedi%20MLBD%20%28Sri%20Vidya%29/page/n211" target="_blank" rel="noopener">archive.org/details/SriVidyaKalpalataRajendraRanjanChaturvediMLBDSriVidya</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/SrutimahatiRamKaranSarmaFelicitationRadhavallabhTripathiVolumePart2Articles/Srutimahati%20Ram%20Karan%20Sarma%20Felicitation%20Radhavallabh%20Tripathi%20Volume%20Part%202%20%28Articles%29/page/n70/mode/1up" target="_blank" rel="noopener">archive.org/details/SrutimahatiRamKaranSarmaFelicitationRadhavallabhTripathiVolumePart2Articles</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/StavachintamaniOfShriKshemrajaDefectiveKrishnanandaSagar" target="_blank" rel="noopener">archive.org/details/StavachintamaniOfShriKshemrajaDefectiveKrishnanandaSagar</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/StotraSringeri" target="_blank" rel="noopener">archive.org/details/StotraSringeri</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/StotrarnavahT.Chandrasekhara/page/n292/mode/1up" target="_blank" rel="noopener">archive.org/details/StotrarnavahT.Chandrasekhara</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/TaraKarpuraRajaStotraWithPrakasikaVyakhyaDatiaSwami/Tara%20Karpura%20Raja%20Stotra%20with%20Prakasika%20Vyakhya%20Datia%20Swami/page/n65" target="_blank" rel="noopener">archive.org/details/TaraKarpuraRajaStotraWithPrakasikaVyakhyaDatiaSwami</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TheArcticHomeInTheVedas" target="_blank" rel="noopener">archive.org/details/TheArcticHomeInTheVedas</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TheBhaktiStotraOfAvadhutaSiddhaM.M.GopinathKaviraj_201709" target="_blank" rel="noopener">archive.org/details/TheBhaktiStotraOfAvadhutaSiddhaM.M.GopinathKaviraj_201709</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TheMahaBhagavataPuranaPushpendraKumar" target="_blank" rel="noopener">archive.org/details/TheMahaBhagavataPuranaPushpendraKumar</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TheSamgrahaChudamaniOfGovinda/page/n481" target="_blank" rel="noopener">archive.org/details/TheSamgrahaChudamaniOfGovinda</a> — <code>404</code></li>
+            <li><a href="https://archive.org/stream/TheVamanaPuranaNagPublisher/The%20Vamana%20Purana" target="_blank" rel="noopener">archive.org/details/TheVamanaPuranaNagPublisher</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TriguneshwarShivaStotraAcharyaAmritaVagbhava_201710" target="_blank" rel="noopener">archive.org/details/TriguneshwarShivaStotraAcharyaAmritaVagbhava_201710</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/TripuraBharatiLaghuStavaLaghuPandit_201709/page/n73/mode/1up" target="_blank" rel="noopener">archive.org/details/TripuraBharatiLaghuStavaLaghuPandit_201709</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/akash-bhairav-tantra-kapil-dev-narayan/page/n66/mode/1up" target="_blank" rel="noopener">archive.org/details/akash-bhairav-tantra-kapil-dev-narayan</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/bhrigusutramgskapoor_202002" target="_blank" rel="noopener">archive.org/details/bhrigusutramgskapoor_202002</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/bodhayanmatadarsh/" target="_blank" rel="noopener">archive.org/details/bodhayanmatadarsh</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/desikaastakabykrishnarajapurasankaradikshitatamiltransvenkatramsastrivanivilaspr_202003_371_G/page/n60/mode/1up" target="_blank" rel="noopener">archive.org/details/desikaastakabykrishnarajapurasankaradikshitatamiltransvenkatramsastrivanivilaspr_202003_371_G</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/ganeshaatharvashirshaadetailedtransaltionfrominternet_202002/" target="_blank" rel="noopener">archive.org/details/ganeshaatharvashirshaadetailedtransaltionfrominternet_202002</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/hitopadesha_201804" target="_blank" rel="noopener">archive.org/details/hitopadesha_201804</a> — <code>404</code></li>
+            <li><a href="https://archive.org/details/mantra-stotra-sangraha-sanskrit/page/n226/mode/1up" target="_blank" rel="noopener">archive.org/details/mantra-stotra-sangraha-sanskrit</a> — <code>404</code></li>
+            <li><em>… and 13 more</em></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span>third-party (38)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="http://Sanskritweb.net/yajurveda/ta-07.pdf" target="_blank" rel="noopener">http://Sanskritweb.net/yajurveda/ta-07.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://acharya.org/bk/pb/pba/svgs.pdf" target="_blank" rel="noopener">http://acharya.org/bk/pb/pba/svgs.pdf</a> — <code>403</code></li>
+            <li><a href="http://ambaa.org/pdf/laxmi_kataxam.pdf" target="_blank" rel="noopener">http://ambaa.org/pdf/laxmi_kataxam.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://asi.nic.in/asi_books/7941.pdf" target="_blank" rel="noopener">http://asi.nic.in/asi_books/7941.pdf</a> — <code>404</code></li>
+            <li><a href="http://sanskritweb.net/yajurveda/ta-find.pdf" target="_blank" rel="noopener">http://sanskritweb.net/yajurveda/ta-find.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://srimahaperiavaltrust.com/welcome_files/downloads/pdf/devistutimanjari.pdf" target="_blank" rel="noopener">http://srimahaperiavaltrust.com/welcome_files/downloads/pdf/devistutimanjari.pdf</a> — <code>404</code></li>
+            <li><a href="http://www.aghori.it/Devi%20Khadgamala%20Stotram.pdf" target="_blank" rel="noopener">http://www.aghori.it/Devi%20Khadgamala%20Stotram.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.cbse.nic.in/Sanskrit%20Ritika-XI.pdf" target="_blank" rel="noopener">http://www.cbse.nic.in/Sanskrit%20Ritika-XI.pdf</a> — <code>403</code></li>
+            <li><a href="http://www.chandralamba.org/links/downloads/Karnatakatlya_Shakti_Peeth/Vividha_Stotra_Artya_Padhey/4_Stottra_(Shankaracharaya%20krut).pdf" target="_blank" rel="noopener">http://www.chandralamba.org/links/downloads/Karnatakatlya_Shakti_Peeth/Vividha_Stotra_Artya_Padhey/4_Stottra_(Shankaracharaya%20krut).pdf</a> — <code>404</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2065_02.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2065_02.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2065_04.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2065_04.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2065_05.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2065_05.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2065_08.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2065_08.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2067_02.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2067_02.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.gnv.org.np/archive/GNV_2070_04.pdf" target="_blank" rel="noopener">http://www.gnv.org.np/archive/GNV_2070_04.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="http://www.hira-pub.org/hiralekh/1954G%20Chintamani%20%20Parshvanath%20Stavan.pdf" target="_blank" rel="noopener">http://www.hira-pub.org/hiralekh/1954G%20Chintamani%20%20Parshvanath%20Stavan.pdf</a> — <code>404</code></li>
+            <li><a href="http://www.hira-pub.org/hiralekh/1967G%20A%20Morning%20prayer.pdf" target="_blank" rel="noopener">http://www.hira-pub.org/hiralekh/1967G%20A%20Morning%20prayer.pdf</a> — <code>404</code></li>
+            <li><a href="http://www.new.dli.ernet.in/bitstream/handle/2015/369732/Da-Aaraya.pdf" target="_blank" rel="noopener">http://www.new.dli.ernet.in/bitstream/handle/2015/369732/Da-Aaraya.pdf</a> — <code>URLError(gaierror(8, &#x27;nodename nor servname provided, or not known&#x27;))</code></li>
+            <li><a href="http://www.rupanuga.narod.ru/pdf/gitas_en.pdf" target="_blank" rel="noopener">http://www.rupanuga.narod.ru/pdf/gitas_en.pdf</a> — <code>URLError(SSLCertVerificationError(1, &quot;[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for &#x27;www.rupanuga.narod.ru&#x27;. (_ssl.c:1006)&quot;))</code></li>
+            <li><a href="http://www.sanskritweb.net/yajurveda/ta-01.pdf" target="_blank" rel="noopener">http://www.sanskritweb.net/yajurveda/ta-01.pdf</a> — <code>RemoteDisconnected(&#x27;Remote end closed connection without response&#x27;)</code></li>
+            <li><a href="https://chitrapurmath.net/documents/upload/1609497197S%C4%81rthamantrapushp%C4%81%C3%B1jal%C4%AB_[Sanskrit,_Kanna%E1%B8%8Da-Transliteration_,_Kanna%E1%B8%8Da,_Mar%C4%81t%CD%9Fh%C4%AB,_English-Translation].pdf" target="_blank" rel="noopener">https://chitrapurmath.net/documents/upload/1609497197S%C4%81rthamantrapushp%C4%81%C3%B1jal%C4%AB_[Sanskrit,_Kanna%E1%B8%8Da-Transliteration_,_Kanna%E1%B8%8Da,_Mar%C4%81t%CD%9Fh%C4%AB,_English-Translation].pdf</a> — <code>404</code></li>
+            <li><a href="https://chitrapurmath.net/documents/upload/1609498684Shr%C4%AB_Gurubhajana_Stotram_[Sanskrit].pdf" target="_blank" rel="noopener">https://chitrapurmath.net/documents/upload/1609498684Shr%C4%AB_Gurubhajana_Stotram_[Sanskrit].pdf</a> — <code>404</code></li>
+            <li><a href="https://estudantedavedanta.net/Jivan_Mukti_Viveka_Moksadananda.pdf" target="_blank" rel="noopener">https://estudantedavedanta.net/Jivan_Mukti_Viveka_Moksadananda.pdf</a> — <code>403</code></li>
+            <li><a href="https://prabhuji.net/wp-content/uploads/2018/03/srigeetaguhyam.pdf" target="_blank" rel="noopener">https://prabhuji.net/wp-content/uploads/2018/03/srigeetaguhyam.pdf</a> — <code>404</code></li>
+            <li><a href="https://prabhuji.net/wp-content/uploads/2020/07/atmacintanam.pdf" target="_blank" rel="noopener">https://prabhuji.net/wp-content/uploads/2020/07/atmacintanam.pdf</a> — <code>404</code></li>
+            <li><a href="https://prabhuji.net/wp-content/uploads/2020/07/badrishstavanam.pdf" target="_blank" rel="noopener">https://prabhuji.net/wp-content/uploads/2020/07/badrishstavanam.pdf</a> — <code>404</code></li>
+            <li><a href="https://prabhuji.net/wp-content/uploads/2020/07/govimarshanam.pdf" target="_blank" rel="noopener">https://prabhuji.net/wp-content/uploads/2020/07/govimarshanam.pdf</a> — <code>404</code></li>
+            <li><a href="https://samvitsamvaad.org/documents/freeDownload/ebook/1471856068-Samvit_Stotra_Sangraha.pdf" target="_blank" rel="noopener">https://samvitsamvaad.org/documents/freeDownload/ebook/1471856068-Samvit_Stotra_Sangraha.pdf</a> — <code>404</code></li>
+            <li><a href="https://svradhakrishnasastri.in/wp-content/uploads/2015/11/pdf/Easwara%20Dhyana%20Manjari.pdf" target="_blank" rel="noopener">https://svradhakrishnasastri.in/wp-content/uploads/2015/11/pdf/Easwara%20Dhyana%20Manjari.pdf</a> — <code>404</code></li>
+            <li><a href="https://tamildigitallibrary.in/admin/assets/book/TVA_BOK_0000066_%E0%AE%AA%E0%AE%BF%E0%AE%B0%E0%AE%B9%E0%AF%8D%E0%AE%AE%E0%AE%B2%E0%AE%BF%E0%AE%A4%E0%AE%BE%E0%AE%9A%E0%AF%80%E0%AE%B0%E0%AF%8D%E0%AE%B5%E0%AE%BE%E0%AE%A4%E0%AE%AA%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%A4%E0%AE%BF_%E0%AE%AE%E0%AF%82%E0%AE%B2%E0%AE%AE%E0%AF%8D.pdf" target="_blank" rel="noopener">https://tamildigitallibrary.in/admin/assets/book/TVA_BOK_0000066_%E0%AE%AA%E0%AE%BF%E0%AE%B0%E0%AE%B9%E0%AF%8D%E0%AE%AE%E0%AE%B2%E0%AE%BF%E0%AE%A4%E0%AE%BE%E0%AE%9A%E0%AF%80%E0%AE%B0%E0%AF%8D%E0%AE%B5%E0%AE%BE%E0%AE%A4%E0%AE%AA%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%A4%E0%AE%BF_%E0%AE%AE%E0%AF%82%E0%AE%B2%E0%AE%AE%E0%AF%8D.pdf</a> — <code>404</code></li>
+            <li><a href="https://tulsidas-ram-books.weebly.com/uploads/2/1/7/4/21746472/upasana_darpan-by_swami_tribhuvvandas.pdf" target="_blank" rel="noopener">https://tulsidas-ram-books.weebly.com/uploads/2/1/7/4/21746472/upasana_darpan-by_swami_tribhuvvandas.pdf</a> — <code>404</code></li>
+            <li><a href="https://upsanskritpratibhakhoj.com/Upload/%E0%A4%B8%E0%A4%82%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A5%83%E0%A4%A4%20%E0%A4%97%E0%A5%80%E0%A4%A4.pdf" target="_blank" rel="noopener">https://upsanskritpratibhakhoj.com/Upload/%E0%A4%B8%E0%A4%82%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A5%83%E0%A4%A4%20%E0%A4%97%E0%A5%80%E0%A4%A4.pdf</a> — <code>404</code></li>
+            <li><a href="https://webstock.in/001-Epics/Surya-Upasana-Hindi/002-Surya-Upasana-Hindi.pdf" target="_blank" rel="noopener">https://webstock.in/001-Epics/Surya-Upasana-Hindi/002-Surya-Upasana-Hindi.pdf</a> — <code>URLError(SSLEOFError(8, &#x27;[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)&#x27;))</code></li>
+            <li><a href="https://www.chitrapurmath.net/documents/upload/1609498489Shr%C4%AB_Chitr%C4%81pur_Stutima%C3%B1jar%C4%AB_2019_[Sanskrit].pdf" target="_blank" rel="noopener">https://www.chitrapurmath.net/documents/upload/1609498489Shr%C4%AB_Chitr%C4%81pur_Stutima%C3%B1jar%C4%AB_2019_[Sanskrit].pdf</a> — <code>404</code></li>
+            <li><a href="https://www.dwarkadheeshvastu.com/001-Epics-PDF/Surya-Upasana-Hindi/002-Surya-Upasana-Hindi.pdf" target="_blank" rel="noopener">https://www.dwarkadheeshvastu.com/001-Epics-PDF/Surya-Upasana-Hindi/002-Surya-Upasana-Hindi.pdf</a> — <code>URLError(SSLEOFError(8, &#x27;[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)&#x27;))</code></li>
+            <li><a href="https://www.sadagopan.org/ebook/pdf/Hamsa%20Sandesam%20v1.pdf" target="_blank" rel="noopener">https://www.sadagopan.org/ebook/pdf/Hamsa%20Sandesam%20v1.pdf</a> — <code>URLError(SSLEOFError(8, &#x27;[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)&#x27;))</code></li>
+            <li><a href="https://www.saveca.ca/Jayadhi%20Homam%20in%20Sanskrit.pdf" target="_blank" rel="noopener">https://www.saveca.ca/Jayadhi%20Homam%20in%20Sanskrit.pdf</a> — <code>404</code></li>
+            <li><a href="https://www.shuklayajurveda.org/SandhyaVadhanam.pdf" target="_blank" rel="noopener">https://www.shuklayajurveda.org/SandhyaVadhanam.pdf</a> — <code>URLError(SSLEOFError(8, &#x27;[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)&#x27;))</code></li>
+          </ul>
+</details></li>
+            <li class="audit-item"><details>
+<summary class="audit-summary"><span>scannedbooks (6)</span></summary>
+          <ul style="margin-left: 1.6em;">
+            <li><a href="https://sanskritdocuments.org/scannedbooks/forencoding/DONE/SriPremikaAshtoththiramSanskrit.pdf" target="_blank" rel="noopener">https://sanskritdocuments.org/scannedbooks/forencoding/DONE/SriPremikaAshtoththiramSanskrit.pdf</a> — <code>404</code></li>
+            <li><a href="https://sanskritdocuments.org/scannedbooks/forencoding/DONE/shri-agni-sahasranamavali.pdf" target="_blank" rel="noopener">https://sanskritdocuments.org/scannedbooks/forencoding/DONE/shri-agni-sahasranamavali.pdf</a> — <code>404</code></li>
+            <li><a href="https://sanskritdocuments.org/scannedbooks/forencodnig/DONE/mahAkAlabhairavakavacha_rudrayAmala.pdf" target="_blank" rel="noopener">https://sanskritdocuments.org/scannedbooks/forencodnig/DONE/mahAkAlabhairavakavacha_rudrayAmala.pdf</a> — <code>404</code></li>
+            <li><a href="https://sanskritdocuments.org/scannedbooks/forendocing/DONE/padmAvatyaShTottarashatanAmAvalI_scan.pdf" target="_blank" rel="noopener">https://sanskritdocuments.org/scannedbooks/forendocing/DONE/padmAvatyaShTottarashatanAmAvalI_scan.pdf</a> — <code>404</code></li>
+            <li><a href="https://sanskritdocuments/scannedbooks/dattagItAvarNanaMmudgalapurANa.pdf" target="_blank" rel="noopener">https://sanskritdocuments/scannedbooks/dattagItAvarNanaMmudgalapurANa.pdf</a> — <code>URLError(gaierror(8, &#x27;nodename nor servname provided, or not known&#x27;))</code></li>
+            <li><a href="https://sanskritdocuments/scannedbooks/forencoding/forencodingdattalahari.pdf" target="_blank" rel="noopener">https://sanskritdocuments/scannedbooks/forencoding/forencodingdattalahari.pdf</a> — <code>URLError(gaierror(8, &#x27;nodename nor servname provided, or not known&#x27;))</code></li>
+          </ul>
+</details></li>
+          </ul>
+          </details></li>
+        </ul>
+        <!-- AUDIT:END -->
+
+      </details>
+
+      <details class="block collapsible">
+        <summary><h2 id="data-quantity">Data Quantity: Historical Trends</h2></summary>
+        <div id="changelogControls" class="cl-controls">
+        <span class="cl-ctl-group"><span class="cl-ctl-label">measure</span>
+          <span class="cl-seg"><button type="button" data-axis="metric" data-value="count">document count</button><button
+                type="button" data-axis="metric" data-value="size">text size</button></span></span>
+        <span class="cl-ctl-group"><span class="cl-ctl-label">period</span>
+          <span class="cl-seg"><button type="button" data-axis="granularity" data-value="1">month</button><button
+                type="button" data-axis="granularity" data-value="3">quarter</button><button
+                type="button" data-axis="granularity" data-value="12">year</button></span></span>
+        <span class="cl-ctl-group"><span class="cl-ctl-label">totals</span>
+          <span class="cl-seg"><button type="button" data-axis="mode" data-value="cumulative">cumulative</button><button
+                type="button" data-axis="mode" data-value="year">period</button></span></span>
+        </div>
+        <div id="changelogChart">Loading…</div>
+        <p style="margin-top:12px;">
+          Every document records its own <em>Latest update</em>,
+          and all but <span data-stat="dates_unusable">9</span> of
+          <strong><span data-stat="total">9,756</span></strong> can be placed in a year.
+          More informative would be date of addition,
+          but the site does <strong>not</strong> record this,
+          so the latest-update date is the best measure of the collection's growth.
+          This means that any modified document drifts forward in time —
+          leaving the year it arrived and landing in the year it was last edited —
+          and the graph as a whole is most likely greatly skewed toward the present,
+          but it's not possible to know by exactly how much.
+        </p>
+        <p>
+          Partial correctives for this error do exist: two earlier copies of the
+          corpus, each proving that whatever a document's stamp says, it was
+          already there when the copy was taken. One is a
+          <strong>complete copy of the site from June 2020</strong>
+          <a href="https://github.com/lalitaalaalitah/sanskrit-documents-dump" target="_blank">on GitHub</a>;
+          the other is an earlier scrape by the author of this Atlas, from February 2025.
+          Attestation can only ever move a document earlier, never later, so a
+          second copy adds corrections without undoing any.
+          Between the two they pull
+          <strong><span data-stat="attested_pulled_back">153</span> documents</strong>
+          back to a more correct date —
+          <span data-stat="attested_pulled_pre2020_pct">42</span>% of them to
+          somewhere before mid-2020, the remaining
+          <span data-stat="attested_pulled_mid_pct">58</span>% into the years
+          between — and they put a date on
+          <span data-stat="bad_dates_rescued">9</span> of the documents whose
+          own field is unusable (see <a href="#data-quality">above</a>).
+        </p>
+      </details>
+    </section>
+  </main>
+
+  <script type="module">
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    /* "2026-08-15" -> "Aug 2026", matching how Sāgarasaṅgama rounds the same
+       figure. A day-level date overstates how current the content is, and the
+       month is the honest granularity. Read off the string rather than parsed
+       with `new Date()`: an ISO date parses as UTC midnight, which is the
+       previous day locally and can print the wrong month. */
+    function monthYear(iso) {
+      const m = /^(\d{4})-(\d{2})/.exec(iso || "");
+      if (!m) return "";
+      const month = MONTHS[Number(m[2]) - 1];
+      return month ? `${month} ${m[1]}` : "";
+    }
+
+    async function loadVersion() {
+      try {
+        const r = await fetch("./VERSION");
+        if (!r.ok) return;
+        const text = await r.text();
+        for (const line of text.split("\n")) {
+          if (!line.includes("=")) continue;
+          const eqIdx = line.indexOf("=");
+          const key = line.slice(0, eqIdx).trim();
+          const value = line.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, "");
+          if (key === "__code_version__") {
+            const el = document.getElementById("appVersion");
+            if (el) el.textContent = `v${value}`;
+          } else if (key === "__data_version__") {
+            const el = document.getElementById("pipelineRun");
+            if (el) el.textContent = `data pipeline last run: ${value}`;
+          } else if (key === "__content_version__") {
+            const el = document.getElementById("contentDate");
+            if (el) el.textContent = `data last sourced: ${monthYear(value)}`;
+          }
+        }
+      } catch (e) {
+        console.log("Could not load version:", e);
+      }
+    }
+
+    loadVersion();
+  </script>
+  <script type="module">
+    import { initStaticTranslit } from "./translit-static.js";
+    import { initAnchorDetails } from "./anchor-details.js";
+    import { initTopbarHeight } from "./topbar-height.js";
+    initTopbarHeight();
+    initStaticTranslit("iast");
+    initAnchorDetails();
+  </script>
+  <script type="module" src="./about.js"></script>
+</body>
+</html>
