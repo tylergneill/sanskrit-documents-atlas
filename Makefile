@@ -136,8 +136,8 @@ count-sizes:
 # auto-correction.
 #
 # **Offline, entirely.** Every check reads a file in data/, so there is no
-# network, no clearance cookie, and no exit-2 INCONCLUSIVE convention like the
-# e-bharatisampat sibling has.
+# network and no exit-2 INCONCLUSIVE convention like the e-bharatisampat
+# sibling has.
 # Requires
 # `parse-site`, `parse-listings-site`, `count-sizes` and `fetch-metadata`;
 # `parse-scans`/`check-scans` are optional and their finding degrades to
