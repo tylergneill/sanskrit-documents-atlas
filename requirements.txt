@@ -1,0 +1,5 @@
+# Pinned from requirements.in. beautifulsoup4 is deliberately absent: it was
+# used once to cross-check the body extractor against a real HTML parser, but
+# the pipeline itself parses with stdlib re/html and needs no dependency for it.
+skrutable==2.9.2
+tqdm==4.67.3
