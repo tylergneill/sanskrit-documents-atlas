@@ -57,11 +57,20 @@ def extract_body(page: str) -> str:
     """The document text, stripped of chrome, tags, and entities."""
     match = BODY_RE.search(page)
     region = match.group(1) if match else page
+    had_pre = bool(PRE_RE.search(region))
     region = INF_PRE_RE.sub("", region)
 
     blocks = PRE_RE.findall(region)
-    # No <pre> means an unusual layout; fall back to the whole region rather
-    # than reporting the document as empty.
+    # A metadata-only page carries the `% Field : value` block and nothing
+    # else, so the <pre> we just stripped was the only one: the document is
+    # genuinely empty, and falling back would measure the GA snippet and the
+    # reuse notice as if they were text. Distinguished from the unusual-layout
+    # case below by whether the region held a <pre> to begin with.
+    if had_pre and not blocks:
+        return ""
+
+    # No <pre> at all means an unusual layout; fall back to the whole region
+    # rather than reporting the document as empty.
     text = "\n".join(blocks) if blocks else region
 
     return html.unescape(TAG_RE.sub("", text)).strip()
