@@ -375,8 +375,9 @@ def load_live_stems(path: Path) -> set[str] | None:
     return live
 
 
-def stamp_version(log_path: Path, version_path: Path, tree_path: Path) -> str | None:
-    """Write when the corpus was fetched into docs/VERSION.
+def stamp_version(log_path: Path, version_path: Path, tree_path: Path,
+                  stats: dict) -> str | None:
+    """Write when the corpus was fetched into docs/VERSION and into the tree.
 
     `__content_version__` is the date the newest page in the corpus was
     fetched, read from the fetch journal -- the scrape records its own date, so
@@ -384,23 +385,21 @@ def stamp_version(log_path: Path, version_path: Path, tree_path: Path) -> str | 
     because it was hand-maintained and the snapshot it named had long since
     stopped being what `build` read.
 
+    The same date goes into `all_stats.sourced` (`stats` is that block),
+    beside the figures it dates: Sāgarasaṅgama's home card reads it from the
+    published tree (its CONTRACT.md), and taking both from one value in one
+    place is what keeps that card's "as of" and this site's "data last
+    sourced" from disagreeing. Call it before the tree is written. Without a
+    journal on this machine the date already in docs/VERSION is reused, so
+    the tree never drops the field, and VERSION itself is left alone.
+
     `__data_version__` is today: when the pipeline last ran.
 
     Only stamped for the real track. The snapshot builder writes its own file
     and must not relabel the site as 18 months old.
     """
-    if tree_path != TREE_PATH or not log_path.exists():
+    if tree_path != TREE_PATH:
         return None
-    newest = ""
-    with log_path.open(encoding="utf-8") as handle:
-        for line in handle:
-            fetched = json.loads(line).get("fetched_at") or ""
-            if fetched > newest:
-                newest = fetched
-    if not newest:
-        return None
-    content = newest[:10]
-
     lines = []
     if version_path.exists():
         lines = version_path.read_text(encoding="utf-8").splitlines()
@@ -409,6 +408,21 @@ def stamp_version(log_path: Path, version_path: Path, tree_path: Path) -> str | 
         if "=" in line:
             key, _, value = line.partition("=")
             fields[key.strip()] = value.strip().strip("\"'")
+
+    newest = ""
+    if log_path.exists():
+        with log_path.open(encoding="utf-8") as handle:
+            for line in handle:
+                fetched = json.loads(line).get("fetched_at") or ""
+                if fetched > newest:
+                    newest = fetched
+    content = newest[:10] if newest else fields.get("__content_version__")
+    if not content:
+        return None
+    stats["sourced"] = content
+    if not newest:
+        return content
+
     fields["__data_version__"] = datetime.date.today().isoformat()
     fields["__content_version__"] = content
     fields.setdefault("__code_version__", "0.1.0")
@@ -557,6 +571,9 @@ def main() -> None:
         # pages, and the reason the definition lives here rather than there.
         payload["all_stats"]["pdf_count"] = payload["scans"]["sources"]
 
+    # Before the write: the date lands in the tree as well as in docs/VERSION.
+    stamped = stamp_version(args.log, VERSION_PATH, args.out, payload["all_stats"])
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
@@ -580,9 +597,8 @@ def main() -> None:
               f"{scans['documents']} documents ({note})")
         if dropped:
             print(f"              {dropped} links dropped as not live")
-    stamped = stamp_version(args.log, VERSION_PATH, args.out)
     if stamped:
-        print(f"content date: {stamped} (from {args.log.name})")
+        print(f"content date: {stamped} (from {args.log.name}; also all_stats.sourced)")
     print(f"wrote:        {args.out} "
           f"({args.out.stat().st_size / 1_048_576:.1f} MB)")
 
