@@ -78,13 +78,13 @@ SCAN_LIVENESS_PATH = DATA_DIR / "scan_liveness.jsonl"
 
 # Site-derived, in two tiers that mirror how the site is shaped.
 #
-# TIER 1 -- metadata: the sitemap's ~20 location pages and the 87 category
-# listings. Cheap (~88 requests), and the ONLY thing that says what documents
-# exist, so it is what the full scrape list is built from.
+# TIER 1 -- metadata: the sitemap, the 87 topic listings it links and the 20
+# location pages. Cheap (~108 requests), and the ONLY thing that says what
+# documents exist, so it is what the full scrape list is built from.
 #
 # Two subdirectories because they are two different kinds of page that happen
-# to be fetched together: `locations/` holds the sitemap's `sanskrit/<topic>/`
-# pages, `listings/` the `/doc_*/` category pages they link to. Keeping them
+# to be fetched together: `listings/` holds the sitemap's `sanskrit/<topic>/`
+# pages, `locations/` the `/doc_*/` directory indexes. Keeping them
 # apart means a reparse can tell which tier a cached file came from without
 # re-deriving it from the URL.
 METADATA_CACHE_DIR = DATA_DIR / "metadata_cache"
@@ -96,7 +96,7 @@ CATALOGUE_PATH = DATA_DIR / "catalogue.jsonl"
 # TIER 2 -- the documents themselves, one raw docpage per text, laid out as
 # `<location>/<stem>.html` to mirror the snapshot. Raw HTML rather than
 # extracted text: the page carries the body AND its `% Field : value` block, so
-# keeping it whole means a reparse costs local work instead of 8547 requests.
+# keeping it whole means a reparse costs local work instead of 9781 requests.
 FULLTEXT_CACHE_DIR = DATA_DIR / "fulltext_cache"
 TEXT_LOG_PATH = DATA_DIR / "text_fetch_log.jsonl"
 
