@@ -54,7 +54,6 @@ recount:
 # requests, and the thing to run first: the catalogue it emits IS the scrape
 # list tier 2 walks.
 #   make fetch-metadata
-#   make fetch-metadata ARGS="--report"      # diff what's cached, no network
 fetch-metadata:
 	python -m pipeline.fetch_metadata $(ARGS)
 
