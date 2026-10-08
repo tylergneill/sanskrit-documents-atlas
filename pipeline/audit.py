@@ -812,8 +812,10 @@ def intro_stats(documents, listings, catalogue, sizes, scans, liveness,
     iast = sorted(r["transliterated_bytes"] for r in sizes
                   if r.get("transliterated_bytes"))
     total_iast = sum(iast)
-    stats["iast_mb"] = round(total_iast / 1024 / 1024, 1)
-    stats["median_kb"] = round(iast[len(iast) // 2] / 1024, 1)
+    # Decimal units (1 MB = 1,000,000 bytes), as the tree page and
+    # Sāgarasaṅgama print the same total.
+    stats["iast_mb"] = round(total_iast / 1e6, 1)
+    stats["median_kb"] = round(iast[len(iast) // 2] / 1e3, 1)
     # How few documents carry a sixth of the corpus -- the Puranas and
     # Monier-Williams against a median of a few KB.
     running, heaviest = 0, 0
