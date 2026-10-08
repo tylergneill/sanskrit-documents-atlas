@@ -812,9 +812,9 @@ function renderScanLinks(scans) {
       el("a", {
         href: s.u, target: "_blank", rel: "noreferrer",
         class: "sourceIndexLink",
-        title: `Printed witness ${SCAN_KIND_NOTE[s.k] ?? ""} \u2014 a scan of an edition containing this text, not necessarily the one it was encoded from`,
+        title: `Printed witness ${SCAN_KIND_NOTE[s.k] ?? ""} \u2014 a PDF of an edition containing this text, not necessarily the one it was encoded from`,
       },
-        el("span", { class: "small" }, "scan"),
+        el("span", { class: "small" }, "PDF"),
         el("span", { class: "scanIcon" }),
       ),
     ),
