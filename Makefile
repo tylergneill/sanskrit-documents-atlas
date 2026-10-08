@@ -42,23 +42,25 @@ recount:
 # ============================================================================
 # GROUP 2 -- from the live site.
 # ============================================================================
-# The snapshot is 18 months old and the site has moved since. This checks what
-# changed without re-downloading the corpus.
+# The snapshot is 18 months old and the site has moved since. These fetch the
+# site's own index and then the corpus itself.
 #
-# *** THE TWO NETWORKED TARGETS. *** Both capped at 100 requests for this
-# phase; neither will exceed that without a deliberate code change. One request
-# per 2s, identified by a contact-bearing User-Agent.
+# *** THE TWO NETWORKED TARGETS. *** Both need the private `rivulet` package.
+# Neither is capped: `--limit` bounds a single run and nothing refuses a larger
+# one. One request per 2s, single-threaded, identified by a contact-bearing
+# User-Agent.
 
-# TIER 1 -- metadata. Sitemap + location pages + 87 category listings ->
-# data/metadata_cache/{locations,listings}/ and data/catalogue.jsonl. ~88
+# TIER 1 -- metadata. Sitemap + 87 topic listings + 20 location pages ->
+# data/metadata_cache/{listings,locations}/ and data/catalogue.jsonl. ~108
 # requests, and the thing to run first: the catalogue it emits IS the scrape
-# list tier 2 walks.
+# list tier 2 walks. NOT resumable or cached: every run refetches the whole
+# index and rewrites the catalogue.
 #   make fetch-metadata
 fetch-metadata:
 	python -m pipeline.fetch_metadata $(ARGS)
 
 # TIER 2 -- content. One request per document in the catalogue -> raw docpage
-# HTML in data/fulltext_cache/<location>/<stem>.html. ~8547 requests, ~4.7h at
+# HTML in data/fulltext_cache/<location>/<stem>.html. ~9781 requests, ~5.4h at
 # the 2s delay. Resumable: a cached document is never refetched.
 #   make fetch-text
 #   make fetch-text ARGS="--limit 100"       # bounded first run
