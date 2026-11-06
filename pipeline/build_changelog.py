@@ -414,7 +414,7 @@ def main() -> None:
         print(f"  {rec['period']}: +{rec['items_added_count']:>5} docs, "
               f"cumulative {rec['new']['count']:>5}"
               f"{'  [counts only]' if rec.get('sizes_partial') else ''}")
-    print(f"wrote:     {args.out} ({args.out.stat().st_size / 1024:.0f} KB)")
+    print(f"wrote:     {args.out} ({args.out.stat().st_size / 1e3:.0f} KB)")
 
 
 if __name__ == "__main__":

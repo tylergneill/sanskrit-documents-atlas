@@ -60,7 +60,8 @@ function fmtBytes(n) {
   if (!n) return "—";
   const units = ["B", "KB", "MB", "GB"];
   let i = 0;
-  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  // Decimal units (1 MB = 1,000,000 bytes), matching the tree page.
+  while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
   return `${n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
 }
 
@@ -170,11 +171,9 @@ function clFormat(v) {
 // read as round numbers -- 10,000 rather than 9,756. The step is the largest
 // of 1/2/2.5/5 x 10^n that leaves at most `want` intervals.
 //
-// `unit` is what one displayed unit is worth in the value's own terms, and it
-// is the whole reason this isn't a plain decimal rounding: under "size" the
-// axis is bytes but the label is megabytes, so a round step has to be round
-// in the unit the reader sees. Choosing 50,000,000 bytes because it is a
-// round decimal number prints "48 MB", which is not a tick anyone can read.
+// `unit` is what one displayed unit is worth in the value's own terms: under
+// "size" the axis is bytes but the label is megabytes, so the step is chosen
+// in the unit the reader sees rather than in raw bytes.
 function axisTicks(max, want = 4, unit = 1) {
   if (!(max > 0)) return { top: 1, ticks: [] };
   const raw = max / want / unit;
@@ -186,12 +185,12 @@ function axisTicks(max, want = 4, unit = 1) {
   return { top, ticks };
 }
 
-// The 1024-power fmtBytes will render `max` in, as a byte count -- so the tick
+// The 1000-power fmtBytes will render `max` in, as a byte count -- so the tick
 // step can be chosen in that unit. Capped at GB because that is the largest
 // unit fmtBytes knows.
 function byteUnit(max) {
-  const i = Math.min(3, Math.floor(Math.log(Math.max(max, 1)) / Math.log(1024)));
-  return Math.pow(1024, i);
+  const i = Math.min(3, Math.floor(Math.log10(Math.max(max, 1)) / 3));
+  return Math.pow(1000, i);
 }
 
 // Axis ticks are the same quantity as the bars, so they take the metric's own
@@ -207,7 +206,7 @@ function fmtTick(v) {
   const unit = byteUnit(v);
   const n = v / unit;
   if (unit > 1 && Math.abs(n - Math.round(n)) < 0.001) {
-    const label = ["B", "KB", "MB", "GB"][Math.round(Math.log(unit) / Math.log(1024))];
+    const label = ["B", "KB", "MB", "GB"][Math.round(Math.log10(unit) / 3)];
     return `${Math.round(n)} ${label}`;
   }
   return fmtBytes(v);
