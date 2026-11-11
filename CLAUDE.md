@@ -469,5 +469,6 @@ What replaces the cap is **rate, not budget** — the constraint that was always
 doing the real work. Every fetcher stays single-threaded, one request per
 `--delay` (default 2s) measured start-to-start, with a contact-bearing
 User-Agent, backing off and stopping on 429/5xx rather than retrying into a
-wall. Keep those properties in anything new; they are the terms, not the cap.
+wall, and stopping outright, unretried, after a few consecutive 401/403s,
+since a block is fatal to the run rather than to the document. Keep those properties in anything new; they are the terms, not the cap.
 
