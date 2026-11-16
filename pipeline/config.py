@@ -93,6 +93,14 @@ LISTING_CACHE_DIR = METADATA_CACHE_DIR / "listings"
 METADATA_LOG_PATH = DATA_DIR / "metadata_fetch_log.jsonl"
 CATALOGUE_PATH = DATA_DIR / "catalogue.jsonl"
 
+# The site's own change log, `/whatisnew` plus its yearly archive pages, as
+# fetched by `make fetch-whatisnew` (rivulet) and parsed offline by
+# `parse_whatisnew` into one row per logged event. A third dating source beside
+# `Latest update` and the older corpora: a document's first logged event says
+# it existed by then. See notes/scratch/whatisnew.md.
+WHATISNEW_CACHE_DIR = METADATA_CACHE_DIR / "whatisnew"
+WHATISNEW_EVENTS_PATH = DATA_DIR / "whatisnew_events.jsonl"
+
 # TIER 2 -- the documents themselves, one raw docpage per text, laid out as
 # `<location>/<stem>.html` to mirror the snapshot. Raw HTML rather than
 # extracted text: the page carries the body AND its `% Field : value` block, so

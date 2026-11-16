@@ -67,12 +67,14 @@ from pathlib import Path
 
 from pipeline import parse_snapshot
 from pipeline.build_changelog import (corpus_date, load_attestations,
+                                      load_event_attestations, merge_floors,
                                       parse_update)
 from pipeline.config import (CATALOGUE_PATH, DOCS_DATA_DIR, DUMP_2020_DATE,
                              DUMP_2020_INVENTORY_PATH, INVENTORY_PATH,
                              REPO_ROOT, SCAN_LIVENESS_PATH, SCANS_PATH,
                              SITE_INVENTORY_PATH, SITE_LISTINGS_PATH,
-                             SITE_SIZES_PATH, SNAPSHOT_DATE, TEXT_LOG_PATH)
+                             SITE_SIZES_PATH, SNAPSHOT_DATE, TEXT_LOG_PATH,
+                             WHATISNEW_EVENTS_PATH)
 
 SITE_ROOT = "https://sanskritdocuments.org"
 
@@ -111,6 +113,12 @@ EXTERNAL_STATS = frozenset({"scans_checked"})
 MIRROR_STATS = frozenset({"attested_pulled_back",
                           "attested_pulled_pre2020_pct",
                           "attested_pulled_mid_pct"})
+
+# Figures only the site's change log can measure. Its cache
+# (`data/whatisnew_events.jsonl`) is local-only like the mirror, so a machine
+# without it keeps the published figure rather than blanking it.
+LOG_STATS = frozenset({"log_events", "log_documents", "log_pulled_back",
+                       "log_pulled_pre2020", "all_pulled_back"})
 
 # How many examples a finding lists before it stops. A finding is meant to be
 # actionable, not exhaustive: 76 links is a list someone can work through, 9756
@@ -194,6 +202,14 @@ def load_liveness(path=SCAN_LIVENESS_PATH):
         return []
     with path.open(encoding="utf-8") as handle:
         return [json.loads(line) for line in handle if line.strip()]
+
+
+def _is_live(row) -> bool:
+    """2xx or 3xx, the rule `build_tree.load_live_stems` and `check_scans`
+    both use. This was `== 200` here until 2026-11-16, which went unnoticed
+    until the first 302 appeared: the page then said one source fewer than
+    the tree it ships beside."""
+    return 200 <= (row.get("status") or 0) < 400
 
 
 def fetch_ceiling(path=TEXT_LOG_PATH):
@@ -406,7 +422,7 @@ def find_dead_scans(scans, liveness):
         return {"stems": [], "count": 0, "links": 0, "docs": 0,
                 "by_kind": collections.Counter(), "unchecked": True,
                 "checked_at": None}
-    dead = {r["stem"]: r for r in liveness if r.get("status") != 200}
+    dead = {r["stem"]: r for r in liveness if not _is_live(r)}
     stranded = [s for s in scans if s["stem"] in dead]
     return {
         "stems": sorted(dead),
@@ -799,6 +815,42 @@ def intro_stats(documents, listings, catalogue, sizes, scans, liveness,
         stats["attested_pulled_mid_pct"] = (
             100 - stats["attested_pulled_pre2020_pct"] if pulled_back else 0)
 
+    # The site's change log, on top of the dumps. Same `min` the chart takes
+    # (`build_changelog` merges the same two loaders with `merge_floors`), so
+    # this counts exactly the documents the log moves earlier than both their
+    # stamp and every dump -- what it adds, not what it repeats.
+    logged = load_event_attestations(WHATISNEW_EVENTS_PATH,
+                                     {d["doc_id"] for d in documents})
+    if logged:
+        events = sum(1 for _ in WHATISNEW_EVENTS_PATH.open(encoding="utf-8"))
+        combined = merge_floors(attested, logged)
+        log_back = log_pre = all_back = 0
+        for doc in documents:
+            stamp = parse_update(doc.get("latest_update") or "", ceiling)
+            before = min((d for d in (stamp, attested.get(doc["doc_id"])) if d),
+                         default=None)
+            after = combined.get(doc["doc_id"])
+            if after is not None and before is not None and after < before:
+                log_back += 1
+                if after < cutoff:
+                    log_pre += 1
+            # The chart's own "pulled back" count: earlier than the stamp by
+            # any source. Not the sum of the per-source figures -- a document
+            # the copies move and the log then moves further is in both.
+            if after is not None and stamp is not None and after < stamp:
+                all_back += 1
+        stats["all_pulled_back"] = all_back
+        # The chart dates an unusable stamp from the log too, so the page's
+        # rescue count has to include it -- recounted over the merged floors.
+        stats["bad_dates_rescued"] = sum(
+            1 for doc in documents
+            if parse_update(doc.get("latest_update") or "", ceiling) is None
+            and combined.get(doc["doc_id"]) is not None)
+        stats["log_events"] = events
+        stats["log_documents"] = len(logged)
+        stats["log_pulled_back"] = log_back
+        stats["log_pulled_pre2020"] = log_pre
+
     # Cataloguing.
     stats["languages"] = len(
         {(d.get("language") or "").strip() for d in documents
@@ -835,7 +887,7 @@ def intro_stats(documents, listings, catalogue, sizes, scans, liveness,
     # produces. Counting live rows alone publishes 895 where the tree says 873,
     # and a figure on this page disagreeing with the tree is exactly the drift
     # this module exists to prevent.
-    live = {r["stem"] for r in liveness if r.get("status") == 200}
+    live = {r["stem"] for r in liveness if _is_live(r)}
     kept = [s for s in scans if s["stem"] in live]
     if kept:
         stats["scans_live"] = len({s["stem"] for s in kept})
@@ -1358,7 +1410,7 @@ def update_intro_stats(stats, path=ABOUT_HTML_PATH):
     def sub(match):
         key = match.group("key")
         if key not in stats:
-            if key in EXTERNAL_STATS or key in MIRROR_STATS:
+            if key in EXTERNAL_STATS or key in MIRROR_STATS or key in LOG_STATS:
                 # Offline run, or no local mirror -- leave the measured value.
                 return match.group(0)
             raise SystemExit(

@@ -241,12 +241,14 @@ slugs. Re-run it whenever `ALIASES` or `mechanical()` changes.
 | `make count-sizes` | `fulltext_cache/` bodies → `data/site_sizes.jsonl` (~15s) |
 | `make build` | those three → `docs/data/tree.json`, and stamps `docs/VERSION` |
 | `make parse-dump-2020` | 2020 site mirror → `data/dump2020_inventory.jsonl` (dating input, not a track) |
-| `make changelog` | `Latest update` per document, floored by the 2020 mirror → `docs/data/changelog.json` |
+| `make parse-whatisnew` | cached change-log pages → `data/whatisnew_events.jsonl` (dating input, no network) |
+| `make changelog` | `Latest update` per document, floored by the 2020 snapshot, the Feb-2025 scrape and the change log → `docs/data/changelog.json` |
 | `make audit` | all six checks → a report; writes nothing. Entirely offline — no network, no rivulet |
 | `make audit-update-about` | ...and rewrite the About page's audit region and every `data-stat` figure |
 | `make serve` | serve `docs/` on :8003 |
 | `make fetch-metadata` | **networked, needs rivulet** — tier 1: sitemap + 87 listings + 20 locations → `data/metadata_cache/{listings,locations}/` + `catalogue.jsonl`. ~108 requests |
 | `make fetch-text` | **networked, needs rivulet** — tier 2: every document in the catalogue → `data/fulltext_cache/<location>/<stem>.html`. ~9781 requests, ~5.4h |
+| `make fetch-whatisnew` | **networked, needs rivulet** — the site's change log, main page + yearly archives → `data/metadata_cache/whatisnew/`. ~6 requests, always refetched |
 
 ## The About page's figures are generated, not typed
 
@@ -364,6 +366,24 @@ no tree is built from it, and `snapshot-changelog` does not use it — the
 snapshot must keep reporting what the snapshot alone can support. The Makefile
 passes `--attest` only when `data/dump2020_inventory.jsonl` exists, so a machine
 without the mirror still builds, just to the looser bound.
+
+**Since 2026-11-16 a third source dates documents: the site's own change log**
+(`/whatisnew` and its yearly archives, `make fetch-whatisnew` then
+`make parse-whatisnew` -> `data/whatisnew_events.jsonl`). Each document's first
+logged event is an "existed by" date, merged with the dumps by taking the
+earliest (`build_changelog --attest-events`, `merge_floors`). Unlike a dump it
+dates documents one at a time, so it resolves the pre-2020 years the 2020
+snapshot can only floor at June 2020. With it the chart pulls back 1520
+documents instead of 820. Like the snapshot it is optional and real-track
+only: the Makefile passes it when the events file exists, and
+`snapshot-changelog` never does.
+
+**`Latest update` is hand-maintained**, and the site admin has said it may be
+inaccurate. Treat it as one of three unequal sources, not ground truth. The
+change log is precise but incomplete: every logged update was a real change, but
+it named 17% of Aug→Nov 2026 text changes, and deleting or renaming a document
+erases its entries. So it corrects dates and never proves a document unchanged.
+See `notes/scratch/whatisnew.md`.
 
 **It is two-track like `build`**, and became so on 2026-08-19 — the 2026-08-18
 split covered the tree and missed this. Until then the published curve was the

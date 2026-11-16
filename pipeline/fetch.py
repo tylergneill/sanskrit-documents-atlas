@@ -16,6 +16,7 @@ rivulet is anything that crosses the network:
 
     make fetch-metadata   the sitemap walk that writes catalogue.jsonl
     make fetch-text       the corpus itself
+    make fetch-whatisnew  the site's change log, ~6 pages
     make check-scans      are the linked scans still resolving?
 
 **A checkout without rivulet cannot build the corpus from scratch.** That is
@@ -70,6 +71,10 @@ def fetch_metadata_main():
 
 def fetch_text_main():
     return _load("rivulet.extract.sanskrit_documents.fetch_fulltext", "main")
+
+
+def fetch_whatisnew_main():
+    return _load("rivulet.extract.sanskrit_documents.fetch_whatisnew", "main")
 
 
 def check_scans_main():

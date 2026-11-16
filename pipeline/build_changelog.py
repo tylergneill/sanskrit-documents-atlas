@@ -197,6 +197,53 @@ def load_attestations(paths: list[Path]) -> dict[str, datetime]:
     return attested
 
 
+def load_event_attestations(path: Path | None,
+                            doc_ids: set[str]) -> dict[str, datetime]:
+    """`doc_id` -> its first event in the site's change log (`whatisnew`).
+
+    The third dating source, beside `Latest update` and the dated dumps, and
+    the same kind of evidence as a dump: a document logged as added or updated
+    on a date existed by then. Unlike a dump it dates each document
+    separately, which is what lets it resolve the years before 2020 that the
+    2020 snapshot can only floor at June 2020. See `parse_whatisnew` for why the
+    log errs late only (it is pruned, never back-dated), so a `min` against the
+    other sources is safe.
+
+    Log ids are matched exactly, then by a unique case-insensitive match: the
+    log's hand-typed hrefs differ in case from the served path now and then,
+    and a case-insensitive id shared by two documents (the 34 case-clash pairs)
+    is skipped rather than guessed.
+    """
+    if path is None or not path.exists():
+        return {}
+    by_lower: dict[str, list[str]] = defaultdict(list)
+    for doc_id in doc_ids:
+        by_lower[doc_id.lower()].append(doc_id)
+    first: dict[str, datetime] = {}
+    for line in path.open(encoding="utf-8"):
+        event = json.loads(line)
+        doc_id = event["doc_id"]
+        if doc_id not in doc_ids:
+            matches = by_lower.get(doc_id.lower(), [])
+            if len(matches) != 1:
+                continue
+            doc_id = matches[0]
+        when = datetime.fromisoformat(event["date"]).replace(tzinfo=timezone.utc)
+        if doc_id not in first or when < first[doc_id]:
+            first[doc_id] = when
+    return first
+
+
+def merge_floors(*sources: dict[str, datetime]) -> dict[str, datetime]:
+    """Earliest date per document across any number of attestation sources."""
+    merged: dict[str, datetime] = {}
+    for source in sources:
+        for doc_id, when in source.items():
+            if doc_id not in merged or when < merged[doc_id]:
+                merged[doc_id] = when
+    return merged
+
+
 def pct(delta: float, base: float) -> float:
     return (delta / base * 100.0) if base else 0.0
 
@@ -306,6 +353,13 @@ def main() -> None:
                              "toward their real arrival year. Repeatable. Off "
                              "by default -- the curve is a lower bound "
                              "without it and a tighter one with it.")
+    parser.add_argument("--attest-events", type=Path, default=None,
+                        metavar="PATH",
+                        help="the site's change log as parsed by "
+                             "`parse_whatisnew` (data/whatisnew_events.jsonl). "
+                             "Each document's first logged event is an "
+                             "\"existed by\" date, combined with --attest by "
+                             "taking the earliest.")
     parser.add_argument("--out", type=Path, default=CHANGELOG_PATH)
     parser.add_argument("--granularity", choices=("year", "month"),
                         default="month")
@@ -327,14 +381,19 @@ def main() -> None:
 
     records = [json.loads(l) for l in args.inventory.open(encoding="utf-8")]
     sizes = load_sizes(args.sizes)
-    attested = load_attestations(args.attest)
+    dumps = load_attestations(args.attest)
+    logged = load_event_attestations(args.attest_events,
+                                     {r["doc_id"] for r in records})
+    attested = merge_floors(dumps, logged)
 
     print(f"inventory: {args.inventory} ({len(records)} documents)")
     print(f"ceiling:   {ceiling:%Y-%m-%d} (later dates read as upstream typos)")
-    if attested:
-        covered = sum(1 for r in records if r["doc_id"] in attested)
-        print(f"attested:  {len(attested)} documents in {len(args.attest)} "
+    if dumps:
+        covered = sum(1 for r in records if r["doc_id"] in dumps)
+        print(f"attested:  {len(dumps)} documents in {len(args.attest)} "
               f"older dump(s), {covered} of them in this corpus")
+    if logged:
+        print(f"logged:    {len(logged)} documents dated by the site's change log")
 
     buckets: dict[str, dict] = defaultdict(empty_stats)
     listed: dict[str, list] = defaultdict(list)
