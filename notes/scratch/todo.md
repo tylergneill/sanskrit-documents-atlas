@@ -54,7 +54,10 @@ other files in `notes/` are the evidence behind these items, not separate lists.
       them is a filter, not a reparse. Doing so would take the headline 873 ->
       803. Figures re-derived 2026-09-09 from `scans.jsonl` + `scan_liveness.jsonl`;
       the earlier 55/67.9%/748 measured an older pass.
-- [ ] **Rerun `check-scans` periodically.** Links rot: this pass found 114 dead
+- [ ] **Rerun `check-scans` periodically.** As of 2026-11-16, `scans.jsonl`
+      is reparsed from the November listings but liveness is still
+      2026-08-18's. 27 new stems were never checked, so `build` omits their
+      57 links until the next `make check-scans`. Links rot: this pass found 114 dead
       stems of 987 stranding 338 links, and the dead ones are disproportionately
       heavily-cited anthologies. Nothing currently notices when a live link
       dies between runs.
@@ -83,6 +86,26 @@ it: that field diffs on nearly every document only because the site stripped
 addresses site-wide, and it existed solely to keep that noise out of a diff
 nobody runs.
 
+- [x] **Test whether `whatisnew` predicts what changed Aug → Nov 2026.** Done
+      2026-11-16: precision 100%, recall 17% of text changes. Most misses are
+      batch or small edits. See `whatisnew.md`.
+- [ ] **Monthly partial refresh driven by the catalogue diff plus `whatisnew`**,
+      with a full fetch every 6–12 months. Design in `whatisnew.md`; nothing
+      built. Belongs in rivulet (it's networked) with the log parser public
+      here, like `parse_index`.
+- [ ] **42 documents are linked from listings only as cross-references**, as
+      absolute `https://sanskritdocuments.org/doc_…` links inside another
+      entry's "(stotram, nAmAvalI)" parenthetical, so they're in no catalogue.
+      Most look like broken links upstream (wrong folder, typos, `_indexed`
+      and `trial/` paths). A few appear in the log or the 2020 snapshot
+      (`paaravatisahasra`, `sItAsahasranAmastotramadbhutarAmAyaNa`,
+      `tripurasundarIshatanAmastotram`). Worth ~42 requests to see which
+      resolve, then maybe a report to the site. Taking them as membership was
+      tried and reverted; see `parse_index.docpage_links`.
+- [ ] **Collection history from `whatisnew`** on the About page (an event
+      series since 2010, unlike the last-touch changelog). See `whatisnew.md`.
+- [ ] **About page credits** for Sunder Hattangadi and Nandu Abhyankar. On
+      hold until Nandu confirms.
 - [ ] Retire `snapshot_root()` and delete the snapshot track — `parse` /
       `parse-listings` / `recount` / `snapshot-tree`. `build` no longer depends
       on it, and with the diff retired the only remaining caller is the
