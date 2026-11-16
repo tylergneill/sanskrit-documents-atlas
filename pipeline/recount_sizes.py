@@ -25,6 +25,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from pipeline.config import DOCPAGE_DIRNAME, INVENTORY_PATH, SIZES_PATH, snapshot_root
+from pipeline.parse_index import decode_cf_emails
 
 STAT_KEYS = ("raw_bytes", "content_bytes", "transliterated_bytes")
 
@@ -80,7 +81,9 @@ def measure(args: tuple[str, str]) -> tuple[str, dict]:
     """Worker: read one docpage and return its three byte figures."""
     doc_id, path = args
     page = Path(path).read_text(encoding="utf-8", errors="replace")
-    content = extract_body(page)
+    # raw_bytes stays what was served; the text is measured as the site's
+    # files hold it, without Cloudflare's email placeholders.
+    content = extract_body(decode_cf_emails(page))
 
     stats = {
         "raw_bytes": len(page.encode("utf-8")),

@@ -42,6 +42,43 @@ def strip_nav(page: str) -> str:
     return NAV_RE.sub("", page)
 
 
+# The site went behind Cloudflare between the 2026-08 and 2026-11 fetches, and
+# Cloudflare's email obfuscation rewrites every plain address in a served page
+# into a placeholder that carries it XOR-encoded:
+#
+#     <a href="/cdn-cgi/l/email-protection" class="__cf_email__"
+#        data-cfemail="<hex>">[email&#160;protected]</a>
+#
+# (and a `<span>` form, 3 pages). Left alone, it makes ~1100 untouched
+# documents look edited, inflates their byte counts, and slips past
+# `parse_snapshot.strip_emails`, which looks for `@`. Decoding restores the
+# page to what the site's files contain, so the rest of the pipeline sees what
+# it always saw, and the existing email stripping applies to credit fields as
+# before. The cache stays exactly as served; this runs at read time.
+#
+# rivulet's `extract/sanskrit_documents/text_extractor.py` restates this
+# decoder, because it runs and is tested without this repo on the path. Change
+# both together. They were checked equal on all 1,112 obfuscated pages of the
+# 2026-11 cache.
+CF_EMAIL_RE = re.compile(
+    r'<(a|span)\b[^>]*\bdata-cfemail="([0-9a-fA-F]+)"[^>]*>.*?</\1>',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _cf_decode(hexstr: str) -> str:
+    """The first byte is the XOR key for the rest."""
+    data = bytes.fromhex(hexstr)
+    return bytes(b ^ data[0] for b in data[1:]).decode("utf-8", "replace")
+
+
+def decode_cf_emails(page: str) -> str:
+    """Undo Cloudflare's email obfuscation in a served page; no-op without it."""
+    if "data-cfemail" not in page:
+        return page
+    return CF_EMAIL_RE.sub(lambda m: _cf_decode(m.group(2)), page)
+
+
 def subpage_links(page: str) -> dict[str, str]:
     """Sitemap -> {slug: url} for every `sanskrit/<topic>/` listing."""
     links = {}
@@ -62,6 +99,13 @@ def docpage_links(page: str) -> list[str]:
     """
     found = []
     for href in HREF_RE.findall(page):
+        # Relative hrefs only, deliberately. A listing's absolute document
+        # links (`https://sanskritdocuments.org/doc_…`, ~2400 in 2026-11) are
+        # cross-references inside another document's entry -- a nAmAvalI's
+        # "(stotram, nAmAvalI)" pointer to its companion -- not membership.
+        # Accepting them was tried 2026-11-16: 567 documents gained topics
+        # they are not on, and 42 cross-reference targets that no listing
+        # includes (many wrong-folder or typo links) entered the catalogue.
         if not href.startswith("/doc_"):
             continue
         if not href.split("?")[0].endswith(".html"):

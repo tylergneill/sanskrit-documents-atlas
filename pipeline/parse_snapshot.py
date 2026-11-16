@@ -20,6 +20,7 @@ from pathlib import Path
 
 from pipeline.categories import build_key as build_category_key
 from pipeline.categories import split as split_categories
+from pipeline.parse_index import SITE_BASE, decode_cf_emails
 from pipeline.parse_listings import ALIAS_SURVIVORS
 from pipeline.config import (DOCPAGE_DIRNAME, INVENTORY_PATH,
                              LISTING_CACHE_DIR, snapshot_root)
@@ -246,12 +247,18 @@ def parse_links(page: str) -> dict[str, str]:
     for href, label in LINK_RE.findall(crumb.group(0)):
         text = clean(label)
         if text and text not in ("Home",) and not href.endswith("/"):
+            # The site began serving these absolute (`https://sanskritdocuments
+            # .org/doc_x/y.itx`) between the 2026-08 and 2026-11 fetches.
+            # Folded back to the root-relative form both corpora share, so a
+            # served-HTML change does not read as 3000 edited documents.
+            if href.startswith(SITE_BASE + "/"):
+                href = href[len(SITE_BASE):]
             links[text] = href
     return links
 
 
 def parse_page(path: Path, location: str) -> dict:
-    page = path.read_text(encoding="utf-8", errors="replace")
+    page = decode_cf_emails(path.read_text(encoding="utf-8", errors="replace"))
     inf = parse_inf(page)
 
     deva = SITENAME_RE.search(page)
