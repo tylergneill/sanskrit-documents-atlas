@@ -1,9 +1,10 @@
 # whatisnew — the site's own change log
 
-**Status (2026-11-16):** the Aug→Nov test is done (below); nothing built yet.
-Decision so far: use the log for start dates and for monthly partial refreshes,
-alongside the catalogue walk and not instead of it. Keep a full fetch every
-6–12 months.
+**Status (2026-11-16):** the Aug→Nov test is done (below). **Dating is built**
+(v0.2.0, `parse_whatisnew` + `build_changelog --attest-events`, figures on the
+About page). **The monthly partial refresh is designed but not built**: it waits
+on a decision about refetch semantics, i.e. overwriting a cached page and
+keeping the previous copy. Keep a full fetch every 6–12 months.
 
 Pointed out by the site admin. `https://sanskritdocuments.org/whatisnew` is a
 dated event log of additions and updates. If it reliably names what changed,

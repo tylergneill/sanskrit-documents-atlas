@@ -15,5 +15,5 @@ where one contradicts the pipeline, the pipeline is right.
 | File | Status |
 | --- | --- |
 | `todo.md` | live — the backlog spine. Every open item lives here; the top-level `notes/*.md` are the evidence behind them, not separate lists. |
-| `whatisnew.md` | tested 2026-11-16 against the Aug → Nov fetch diff; nothing built. Next: start dates for the changelog, then a monthly partial refresh. Credits on the About page are on hold. |
+| `whatisnew.md` | tested 2026-11-16 against the Aug → Nov fetch diff. Dating built (v0.2.0); the monthly partial refresh is designed, not built. Credits on the About page are on hold. |
 | `category-groups-tentative.md` | rejected 2026-08-12 — the filter ships with plain tags; grouping them by type was tried and abandoned. `CLAUDE.md` cites this as the record of why. |

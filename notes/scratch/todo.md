@@ -54,10 +54,11 @@ other files in `notes/` are the evidence behind these items, not separate lists.
       them is a filter, not a reparse. Doing so would take the headline 873 ->
       803. Figures re-derived 2026-09-09 from `scans.jsonl` + `scan_liveness.jsonl`;
       the earlier 55/67.9%/748 measured an older pass.
-- [ ] **Rerun `check-scans` periodically.** As of 2026-11-16, `scans.jsonl`
-      is reparsed from the November listings but liveness is still
-      2026-08-18's. 27 new stems were never checked, so `build` omits their
-      57 links until the next `make check-scans`. Links rot: this pass found 114 dead
+- [ ] **Rerun `check-scans` periodically.** Last run 2026-11-16, over all
+      1,012 stems: 887 live. Since 2026-08-18, 24 went dead, 6 came back, and
+      all 27 new stems are live. 14 timeouts were retried once and 6 of those
+      came back, so a single pass undercounts. A retry-on-timeout inside
+      `check_scans` would beat the hand retry done this time. Links rot: the August pass found 114 dead
       stems of 987 stranding 338 links, and the dead ones are disproportionately
       heavily-cited anthologies. Nothing currently notices when a live link
       dies between runs.
@@ -89,10 +90,68 @@ nobody runs.
 - [x] **Test whether `whatisnew` predicts what changed Aug → Nov 2026.** Done
       2026-11-16: precision 100%, recall 17% of text changes. Most misses are
       batch or small edits. See `whatisnew.md`.
-- [ ] **Monthly partial refresh driven by the catalogue diff plus `whatisnew`**,
-      with a full fetch every 6–12 months. Design in `whatisnew.md`; nothing
-      built. Belongs in rivulet (it's networked) with the log parser public
-      here, like `parse_index`.
+- [ ] **Monthly partial refresh (stage 2 of `whatisnew`). Due ~2026-12-16,** a
+      month after the 2026-11-16 full fetch. Instead of refetching all ~9,950
+      pages, refetch the few hundred that the catalogue diff and the change log
+      say are new or changed: ~110 index requests plus ~100–200 documents,
+      against ~9,950. Keep a full fetch every 6–12 months; the next one is due
+      by 2027-05. Evidence and figures are in `whatisnew.md` ("Refresh
+      strategy").
+
+      **Decide first (Tyler):**
+      - *Refetch semantics.* Today a file in `fulltext_cache/` means "done",
+        so nothing is ever refetched. A refresh must overwrite deliberately.
+        Proposal: before overwriting, move the old page to
+        `data/fulltext_previous/<location>/<stem>.<fetched-date>.html`,
+        following EBS's `fulltext_previous/`, so every refresh stays diffable
+        and nothing is lost to a bad fetch.
+      - *Removals.* A document dropped from the catalogue: leave it in the
+        cache, but out of `build` (the catalogue already gates that), or move
+        it to `fulltext_previous/`? Proposal: move it, so the cache equals
+        the catalogue again.
+      - *Control sample.* Also refetch a random ~100 documents the log did not
+        name, to measure each month what the log misses, instead of relying on
+        the one Aug→Nov measurement. Costs ~100 requests. Proposal: yes,
+        until a few months agree.
+
+      **Build:**
+      1. Atlas, offline: `pipeline/plan_refresh.py` → `data/refresh_plan.jsonl`.
+         Inputs: the new and previous `catalogue.jsonl`, `whatisnew_events.jsonl`,
+         and a small state file recording the last pass date
+         (`data/refresh_state.json`, written only when a refresh completes).
+         Rows: `{doc_id, reason}`, where `reason` is one of `new` (in
+         catalogue, not cached), `logged` (an event since last pass minus 21
+         days), `pending` (logged, not yet in any listing; carried forward,
+         not fetched), `removed`, or `control`. Case-insensitive log matching
+         as in `build_changelog.load_event_attestations`.
+      2. rivulet: `fetch_fulltext --refetch data/refresh_plan.jsonl`. Same
+         terms and same block-stop rule; journals with `"refetch": reason`;
+         moves the old copy aside per the decision above; skips `pending`.
+         Keep `--refetch` out of the default walk so `make fetch-text`
+         behaves exactly as now.
+      3. Makefile: `plan-refresh`, `fetch-refresh`. One `make refresh`
+         that chains `fetch-metadata` → `fetch-whatisnew --main-only` →
+         `parse-whatisnew` → `plan-refresh` → `fetch-refresh`, then stops
+         before the offline rebuild so the plan can be read first.
+      4. A tiny report in `plan_refresh`: counts per reason, plus the
+         `control` sample's hit rate after the fetch (how many unlogged
+         documents had actually changed). Append that rate to
+         `whatisnew.md`, so the full-fetch interval gets decided from
+         measurements.
+
+      **Run (next month):** first `make refresh`, then read the plan and
+      the report. Then the usual rebuild: `parse-site parse-listings-site
+      count-sizes extract-text build changelog audit-update-about`, then
+      `make data` in sagara-sangama. Before the first run, copy
+      `data/fulltext_cache/` to Gaston, as the pre-refresh baseline.
+
+      **Watch for:** the log running ahead of the listings (13 days in
+      August), which is why the overlap is 21 days. Renames show up as one
+      removal plus one addition, and the renamed document loses its log
+      history, so its start date can regress. Check
+      `log_pulled_back` doesn't drop unexpectedly. Also served-HTML changes
+      like November's Cloudflare front: if many unlogged control documents
+      "change", diff one before believing it.
 - [ ] **42 documents are linked from listings only as cross-references**, as
       absolute `https://sanskritdocuments.org/doc_…` links inside another
       entry's "(stotram, nAmAvalI)" parenthetical, so they're in no catalogue.
@@ -102,8 +161,14 @@ nobody runs.
       `tripurasundarIshatanAmastotram`). Worth ~42 requests to see which
       resolve, then maybe a report to the site. Taking them as membership was
       tried and reverted; see `parse_index.docpage_links`.
-- [ ] **Collection history from `whatisnew`** on the About page (an event
-      series since 2010, unlike the last-touch changelog). See `whatisnew.md`.
+- [x] **`whatisnew` as a dating source.** Done 2026-11-16 (v0.2.0):
+      `fetch-whatisnew` / `parse-whatisnew`, `build_changelog
+      --attest-events`. The About page publishes the figures. The chart
+      pulls back 1520 documents, up from 820.
+- [ ] **An additions-per-month view from `whatisnew`**, as distinct from the
+      last-touch chart: the log's `added` events are a real arrival series
+      from 2010, with gaps in 2011–2016. Not built. Would need the frontend
+      to plot a second series.
 - [ ] **About page credits** for Sunder Hattangadi and Nandu Abhyankar. On
       hold until Nandu confirms.
 - [ ] Retire `snapshot_root()` and delete the snapshot track — `parse` /
