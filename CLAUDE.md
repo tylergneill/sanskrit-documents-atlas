@@ -287,7 +287,8 @@ site-derived caches are expensive; everything else rebuilds locally in seconds.
 
 **`archive/` keeps text the site has arguably lost**, so it can be raised with
 the site admin. The site changes a lot and most of it is improvement, so
-proofreading, reformatting and additions are not archived. After a full
+proofreading, reformatting and additions are not archived, and neither is a
+rename whose text survives under the new doc_id. After a full
 refetch:
 1. The previous fetch state is moved aside as `data/archive-<date>/`.
 2. An agent compares the text content of every document, old vs new. It
