@@ -42,8 +42,30 @@ other files in `notes/` are the evidence behind these items, not separate lists.
       holds all six fields), and it matters only if those fields are ever
       surfaced.
 
-- [ ] The 19 documents in the snapshot but no longer linked live — are they
-      unpublished, merged, or just delisted? ~19 requests, now unblocked.
+- [x] The 19 documents in the snapshot but no longer linked live — are they
+      unpublished, merged, or just delisted? **Closed 2026-11-16.** It's 20
+      against the November catalogue. Each old URL was requested once (20
+      requests, 2s); 17 now 404 and 3 are still served with no listing.
+      - **Moved to another folder, 7:** `shivastutiHdaksha` (ganesha →
+        shiva), the two `devaiHkRRitaM…` (shiva → ganesha), the two
+        `sadAshivendra…` (shiva → deities_misc), `kArtavIryakavachakathanam`
+        (hanumaana → deities_misc) and `svatmaprakashika` (z_misc_shankara →
+        z_misc_major_works). The last two still serve the old copy too.
+      - **Renamed, mostly spelling fixes, ~6:** `…bhairavanatra` →
+        `…bhairavatantra` (2), `munayaH…` → `munibhiH…`,
+        `devAmunayash…` → `devAmunibhish…`, `dhanvantri…` → `dhanvantari…`,
+        `manmahAprabhor…` → `mahAprabhor…`.
+        `shivasahasranAmastotradevIbhAgavata` → `…mahAbhAgavata` is a third
+        kind: renamed, with the old page still served.
+      - **Removed outright, ~6:** `kArtavIryakavachamnAradapurANa`,
+        `kAmAkhyAkavacha` (`…kavacham2`/`3` exist),
+        `chatuHShaShTibhairavanAmAvaliH`, `munayaHkRRitAshivastutiH`,
+        `vidyeshvarasaMhitA`, `dhanvantaristotra3`.
+
+      A rename or move loses the document's change-log history (see
+      `parse_whatisnew`), and the dating doesn't follow it to the new name.
+      That's one more reason the 2020 snapshot and the Feb-2025 inventory stay
+      useful.
 - [ ] **Decide on the third-party PDFs.** 70 survive the liveness check, but
       they are the weak tier: **a third were already dead (65.4% live, 70 of
       107)** against 91.2% for archive.org and 92.0% for the site's own
@@ -57,12 +79,16 @@ other files in `notes/` are the evidence behind these items, not separate lists.
 - [ ] **Rerun `check-scans` periodically.** Last run 2026-11-16, over all
       1,012 stems: 887 live. Since 2026-08-18, 24 went dead, 6 came back, and
       all 27 new stems are live. 14 timeouts were retried once and 6 of those
-      came back, so a single pass undercounts. A retry-on-timeout inside
-      `check_scans` would beat the hand retry done this time. Links rot: the August pass found 114 dead
+      came back, so a single pass undercounts. `check_scans` now retries
+      timeouts itself. Links rot: the August pass found 114 dead
       stems of 987 stranding 338 links, and the dead ones are disproportionately
       heavily-cited anthologies. Nothing currently notices when a live link
       dies between runs.
-- [ ] **`build` degrades silently when the scan files are missing.** Found
+- [x] **`build` degrades silently when the scan files are missing.** Fixed
+      2026-11-16. Both files are now a hard error naming the target, like the
+      other three. `--no-scans` builds without them on purpose and publishes
+      `scans: null` / `pdf_count: null`, which sagara-sangama renders as a
+      dash. Found
       2026-08-19 while rebuilding on a machine where `data/` held only the two
       expensive caches. `--inventory`/`--sizes`/`--listings` each hard-error
       naming the missing target; `--scans` and `--liveness` do not, so the run
@@ -73,9 +99,13 @@ other files in `notes/` are the evidence behind these items, not separate lists.
       Make both a hard error like the other three, or emit an explicit
       `scans: null`; a missing count must not read as "no scans".
 
-- [ ] **Stream `check_scans` output rather than writing at the end.** A 30-min
-      run currently shows nothing until it completes and loses everything if
-      interrupted — it should append rows as it goes and resume from them.
+- [x] **Stream `check_scans` output rather than writing at the end.** Done
+      2026-11-16 in rivulet:
+      - Rows are appended to `scan_liveness.jsonl.inprogress` as they're
+        checked, and a rerun resumes from it (`--fresh` discards it).
+      - Timeouts get one retry at double the timeout (`--no-retry` skips it).
+      - `scannedbooks` stems, which are on sanskritdocuments.org itself, now
+        go at the site's 2s instead of archive.org's 0.5s.
 
 ## Phase 2 — independent acquisition
 
@@ -165,23 +195,47 @@ nobody runs.
       `fetch-whatisnew` / `parse-whatisnew`, `build_changelog
       --attest-events`. The About page publishes the figures. The chart
       pulls back 1520 documents, up from 820.
-- [ ] **An additions-per-month view from `whatisnew`**, as distinct from the
-      last-touch chart: the log's `added` events are a real arrival series
-      from 2010, with gaps in 2011–2016. Not built. Would need the frontend
-      to plot a second series.
 - [ ] **About page credits** for Sunder Hattangadi and Nandu Abhyankar. On
       hold until Nandu confirms.
 - [ ] Retire `snapshot_root()` and delete the snapshot track — `parse` /
-      `parse-listings` / `recount` / `snapshot-tree`. `build` no longer depends
-      on it, and with the diff retired the only remaining caller is the
-      changelog's attestation, which reads `dump2020_inventory.jsonl` and
-      `snapshot_inventory.jsonl` directly. Check what actually still reads the
-      snapshot before deleting.
+      `parse-listings` / `recount` / `snapshot-tree`. **Investigated
+      2026-11-16; nothing deleted yet.** What still reads it:
+      - **Dating, the one real use.** The Makefile's `ATTEST` and
+        `audit.intro_stats` read `data/snapshot_inventory.jsonl`. With the
+        2020 snapshot and the change log in play, dropping it moves 9
+        documents' months. Some of those are large moves, from the scrape's
+        own older stamps (`gurvaShTakam` 2019-02 → 2001-07,
+        `mantrarAjAtmakaHrAmastavaH` 2022-10 → 2005-04). 36 documents are
+        attested by it alone. So the inventory is worth keeping as a frozen
+        file even if the code that makes it goes.
+      - **Defaults, not dependencies.** `parse_snapshot`, `parse_listings` and
+        `recount_sizes` default to the snapshot's paths (`INVENTORY_PATH`,
+        `SIZES_PATH`, `LISTINGS_PATH`, `snapshot_root()`). The real track
+        works only because the Makefile passes `--docroot`/`--out`
+        explicitly. Retiring means flipping those defaults to the site paths.
+        That's the part with real risk; the rest is deletion.
+      - **Already dead here.** `snapshot-tree` and `snapshot-changelog` can't
+        run on this machine: `snapshot_listings.jsonl` and
+        `snapshot_sizes.jsonl` aren't in `data/`. Neither output exists in
+        `docs/data/`. `serve-snapshot` (`serve_docs.py --snapshot`) serves a
+        file that isn't there.
+      - **Nothing outside this repo** refers to any of it (sagara-sangama
+        and rivulet checked).
+      - The About page names the Feb-2025 scrape as a dating source. That
+        prose stays as long as the inventory does.
+
+      Suggested shape when it's done: keep `snapshot_inventory.jsonl` as a
+      frozen dating input, flip the three parsers' defaults, then delete
+      `build_snapshot_tree`, `build_snapshot_changelog`, the `snapshot-*`
+      and `serve-snapshot` targets, and `serve_docs.py --snapshot`.
 
 ## Known gaps
 
-- [ ] 61 documents failed to download in the original scrape
-      (`dl_errors.txt` in the snapshot dir); they are absent here, not empty.
-      Now answerable offline: tier 2 has fetched everything the site serves, so
-      check those 61 against `data/fulltext_cache/` and against the 25 known
-      404s. No requests needed.
+- [x] 61 documents failed to download in the original scrape. **Closed
+      2026-11-16, as far as it can be.** `dl_errors.txt` did not survive the
+      consolidation, and it's on neither this machine nor Gaston. 30 of the
+      61 can be rebuilt from the scrape's own 87 listing pages (listed but no
+      page saved). Of those 30, 6 are in the November corpus, 18 still 404
+      and are among the 22 dead links the audit reports, and 6 are on no
+      listing any more. So the old failures were nearly all dead links
+      upstream, not scrape errors. The other 31 are unrecoverable.

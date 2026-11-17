@@ -150,19 +150,12 @@ burst: the same yearly total, nothing older than a year.
 
 ## How the test was run
 
-The test compares the two caches, `data/archive-2026-08/fulltext_cache/` and
+The test compared the two caches (the August one has since been deleted),
+`data/archive-2026-08/fulltext_cache/` and
 `data/fulltext_cache/`. For each document, the prediction is any log event dated
 on or after that document's own August `fetched_at`, minus a day. Bodies are
 compared by `id="content"` block only, since the page boilerplate (nav,
 analytics, Cloudflare beacon) changes on its own.
-
-## Collection history (About page)
-
-Separately from the test, the full log (all six pages) is an event series
-from 2010, so it can show *additions per month*. The changelog can't show
-that, because it is a last-touch histogram (see
-`growth-from-last-updated.md`). Open question once it is parsed: how complete
-are the early years against the 2020 snapshot and the Feb-2025 scrape?
 
 ## Not yet
 

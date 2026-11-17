@@ -281,7 +281,28 @@ the tree it ships beside is the drift this exists to prevent.
 site-derived caches are expensive; everything else rebuilds locally in seconds.
 
     data/metadata_cache/    108 requests -- the index, and the scrape list
-    data/fulltext_cache/    9756 documents, 315 MB, ~5.5h -- the corpus itself
+    data/fulltext_cache/    ~9,950 documents, ~340 MB, ~5.5h -- the corpus itself
+    data/archive/           IRREPLACEABLE: old pages the site no longer
+                            serves in that form, with notes.jsonl saying why
+
+**`archive/` keeps text the site has arguably lost**, so it can be raised with
+the site admin. The site changes a lot and most of it is improvement, so
+proofreading, reformatting and additions are not archived. After a full
+refetch:
+1. The previous fetch state is moved aside as `data/archive-<date>/`.
+2. An agent compares the text content of every document, old vs new. It
+   ignores the page's metadata block and served-HTML noise, and it checks
+   whether vanished text survives elsewhere on the site.
+3. The agent and the user decide together, case by case, which changes are
+   arguable loss. The old raw page, plus its extracted text, is copied to
+   `data/archive/<doc_id>.html`, and is never overwritten (a second copy goes
+   beside it as `<doc_id> @<fetched date>.html`).
+4. Each archived page gets a row in `archive/notes.jsonl` saying what was lost.
+5. Only then is the aside folder deleted and `data/` mirrored to the backup
+   drive (`/Volumes/Gaston/atlases/sanskrit-documents-atlas/data/`).
+
+Additions are not loss, but they belong in the changelog, so check whether the
+change log recorded them.
 
 **The cache is the resume state.** Unlike the sibling atlas, there is no cursor
 to carry: `fetch_text` treats "file on disk" as "done", so the journal
