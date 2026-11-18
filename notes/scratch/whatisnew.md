@@ -162,6 +162,3 @@ analytics, Cloudflare beacon) changes on its own.
 - About page credits for Sunder Hattangadi and Nandu Abhyankar at the very
   top. **On hold until Nandu confirms the wording.** Do not add them
   before then.
-- Same conversation: whether, and how, the About page should say that Nandu
-  explicitly authorized the scraping. Tyler is asking him what is
-  appropriate.
