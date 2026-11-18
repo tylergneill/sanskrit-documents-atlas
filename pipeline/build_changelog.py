@@ -269,9 +269,9 @@ def bucket_end(key: str, granularity: str) -> str:
 
 
 def make_record(index: int, key: str, prev_key: str | None, granularity: str,
-                cumulative_before: dict, bucket: dict, items: list[dict],
+                cumulative_before: dict, bucket: dict,
                 total_items: int, partial: bool = False) -> dict:
-    """`items` is the truncated display list; `total_items` is the real count."""
+    """One period. Counts only: no per-document list (see the note below)."""
     after = {k: cumulative_before[k] + bucket[k] for k in cumulative_before}
 
     sizes = {}
@@ -299,20 +299,21 @@ def make_record(index: int, key: str, prev_key: str | None, granularity: str,
             "text_count_pct": pct(bucket["text_count"],
                                   cumulative_before["text_count"]),
         },
-        # items_added is capped for file size; the counts are the real totals,
-        # so the UI can say "showing 40 of 1427".
-        "items_added": items,
+        # No per-document list. One shipped here until 2026-11-18, capped at
+        # 40 per month, and nothing read it: the chart reads only these
+        # counts, and sagara-sangama only `date` and `new`. A capped list is
+        # data hidden, an uncapped one is size nobody uses. The site's own
+        # per-document record by period is the About page's Deltas, from
+        # `build_deltas`.
         "items_added_count": total_items,
         "items_added_count_all": total_items,
-        "items_added_truncated": total_items > len(items),
         "items_added_pct": pct(total_items, cumulative_before["count"]),
-        "items_removed": [],
         "items_removed_count": 0,
         "items_removed_count_all": 0,
         "items_removed_pct": 0.0,
         # The site keeps only the latest touch per document, so a re-edit is
-        # indistinguishable from a first publication. Everything lands in
-        # items_added; nothing can be reported as "changed".
+        # indistinguishable from a first publication. Everything counts as
+        # added; nothing can be reported as "changed".
         "items_changed_count": 0,
         "items_with_changed_timestamp": 0,
         "all": {"old": dict(cumulative_before), "new": dict(after)},
@@ -357,8 +358,6 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=CHANGELOG_PATH)
     parser.add_argument("--granularity", choices=("year", "month"),
                         default="month")
-    parser.add_argument("--max-items", type=int, default=40,
-                        help="documents listed per period (all are counted)")
     args = parser.parse_args()
 
     if not args.inventory.exists():
@@ -390,7 +389,6 @@ def main() -> None:
         print(f"logged:    {len(logged)} documents dated by the site's change log")
 
     buckets: dict[str, dict] = defaultdict(empty_stats)
-    listed: dict[str, list] = defaultdict(list)
     undated = 0
 
     pulled_back = 0
@@ -414,21 +412,14 @@ def main() -> None:
         bucket["count"] += 1
         if measured.get("content_bytes", 0) > 0:
             bucket["text_count"] += 1
-        listed[key].append({
-            "id": f"doc:{record['doc_id']}",
-            "title": record["title"] or record["stem"],
-            "date": when.strftime("%Y-%m-%dT00:00:00Z"),
-            "new_bytes": measured.get("transliterated_bytes", 0),
-        })
 
     intervals = []
     cumulative = empty_stats()
     prev_key = None
     for index, key in enumerate(sorted(buckets), start=1):
-        items = sorted(listed[key], key=lambda i: i["date"])
         intervals.append(make_record(
             index, key, prev_key, args.granularity,
-            dict(cumulative), buckets[key], items[: args.max_items], len(items),
+            dict(cumulative), buckets[key], buckets[key]["count"],
         ))
         for k in cumulative:
             cumulative[k] += buckets[key][k]
@@ -445,12 +436,9 @@ def main() -> None:
                                            tz=timezone.utc)
             key = bucket_key(mtime, args.granularity)
             bucket = {**empty_stats(), "count": len(added)}
-            items = [{"id": f"doc:{d}", "title": d.split("/")[-1],
-                      "date": mtime.strftime("%Y-%m-%dT00:00:00Z"),
-                      "new_bytes": 0} for d in added]
             intervals.append(make_record(
                 len(intervals) + 1, key, prev_key, args.granularity,
-                dict(cumulative), bucket, items[: args.max_items], len(added),
+                dict(cumulative), bucket, len(added),
                 partial=True,
             ))
 

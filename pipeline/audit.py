@@ -1424,7 +1424,14 @@ def render_topic_folders(documents, listings):
                  f"&nbsp;{round(n / count * 100)}%"
                  for name, n in top]
         if len(folders) > len(top):
-            parts.append(f'<span style="opacity:.6;">+{len(folders) - len(top)} more</span>')
+            # The rest on hover, so "+N more" names them rather than hiding them.
+            def share(n):
+                pct = round(n / count * 100)
+                return f"{pct}%" if pct else "<1%"
+            rest = "; ".join(f"{name.removeprefix('doc_')} {share(n)}"
+                             for name, n in folders.most_common()[len(top):])
+            parts.append(f'<span style="opacity:.6; cursor:help;" '
+                         f'title="{_esc(rest)}">+{len(folders) - len(top)} more</span>')
         body.append(
             f'                <tr><td style="{cell}"><code>{_esc(slug)}</code></td>'
             f'<td style="{num}">{count:,}</td>'
