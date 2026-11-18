@@ -234,7 +234,7 @@ slugs. Re-run it whenever `ALIASES` or `mechanical()` changes.
 | `make recount` | snapshot bodies → `data/snapshot_sizes.jsonl` (~12s) |
 | `make snapshot-tree` | those three → `docs/data/snapshot_tree.json` |
 | `make snapshot-changelog` | snapshot `Latest update` → `docs/data/snapshot_changelog.json` (unpublished) |
-| **REAL track** | *our own 2026-08 fetch, 9756 docs* |
+| **REAL track** | *our own 2026-11 fetch, 9935 docs* |
 | `make parse-site` | `fulltext_cache/` → `data/site_inventory.jsonl` (no network) |
 | `make parse-listings-site` | tier-1 listing cache → `data/site_listings.jsonl` |
 | `make build-catalogue` | tier-1 listing cache → `data/catalogue.jsonl`, no network (repairs it without refetching) |
@@ -340,9 +340,9 @@ already held — check with `make free-server-port` when the data looks wrong.
 They write different files and are alternatives, and which one the frontend
 gets is a **serve-time** flag (`make serve-snapshot`), never a build-time one.
 
-    build               site_inventory + site_listings + site_sizes  -> tree.json                9756 docs
+    build               site_inventory + site_listings + site_sizes  -> tree.json                9935 docs
     snapshot-tree       snapshot_* equivalents                       -> snapshot_tree.json       8547 docs
-    changelog           site_inventory + site_sizes                  -> changelog.json           9756 docs
+    changelog           site_inventory + site_sizes                  -> changelog.json           9935 docs
     snapshot-changelog  snapshot_* equivalents                       -> snapshot_changelog.json  8547 docs
 
 This separation dates from 2026-08-18. Before it, **`build` read the snapshot's
@@ -369,7 +369,7 @@ in `docs/VERSION` — editing that file by hand is what let it sit at
 
 ## The changelog is growth, not revision history
 
-`make changelog` buckets documents by their own `Latest update` (9754 of 9756
+`make changelog` buckets documents by their own `Latest update` (9934 of 9935
 parse; the field is free text and needs a forgiving parser — abbreviated months,
 `Julu`, `August 43`, `11-Feb-2015`). **The site keeps only the most recent touch
 per document**, so a text encoded in 2004 and reproofed in 2023 appears once,
@@ -378,11 +378,11 @@ under 2023. Don't describe this as a revision history.
 **Since 2026-08-20 the real track floors those dates against a third corpus**, a
 2020-06-27 site mirror (`make parse-dump-2020`, 4739 docs). Presence in it proves
 a document existed by then whatever its stamp claims, so `build_changelog
---attest` buckets it by `min(latest_update, 2020-06-27)`. That pulls 751
-documents back and lifts the pre-2020 collection 19.2%. A bucket now means
+--attest` buckets it by `min(latest_update, 2020-06-27)`. That pulls 768
+documents back and lifts the pre-2020 collection 19.7%. A bucket now means
 "documents known to exist by then" — closer to real growth than "last touched on
-or before then" was, and still a lower bound, since the mirror covers 4535 of
-9756 and only catches stamps that are wrongly *late*.
+or before then" was, and still a lower bound, since the mirror covers 4545 of
+9935 and only catches stamps that are wrongly *late*.
 
 **The mirror is a dating input, not a build track.** Nothing is served from it,
 no tree is built from it, and `snapshot-changelog` does not use it — the
@@ -431,7 +431,7 @@ genuinely-2026 documents back into February 2025.
 `--catalogue` folds documents the live catalogue lists but the corpus lacks into
 a final `sizes_partial` bucket. **On by default only for the snapshot**, which
 is 1254 documents behind; on the real track the corpus *is* the catalogue and
-the residue is just the 25 documents the site 404s.
+the residue is just the 22 documents the site 404s.
 
 ## Clean-text output lives in rivulet
 
@@ -466,9 +466,9 @@ The page holds two `<pre>` blocks and only one is the work:
     <PRE itemprop="text" class="stotra" id="content" lang="sa">   the text
     <pre class="inf">                                             the metadata
 
-Selected by **`id="content"`, not by class** — the class varies (`stotra` 9528,
-`vedic` 157, `shobhika` 68, `namavali` 1) while the id is on all 9754 of the
-9756 cached pages. The two without one
+Selected by **`id="content"`, not by class** — the class varies (`stotra` 9705,
+`vedic` 157, `shobhika` 70, `namavali` 1) while the id is on all 9933 of the
+9935 cached pages. The two without one
 (`doc_devii/siddhasarasvatIstotram2`, `doc_vishhnu/viShNorapAmArjanastotram`)
 are genuine metadata-only stubs, reported as such rather than raised on.
 
