@@ -487,6 +487,10 @@ def main() -> None:
                         default=SITE_LISTINGS_PATH)
     parser.add_argument("--scans", type=Path, default=SCANS_PATH)
     parser.add_argument("--liveness", type=Path, default=SCAN_LIVENESS_PATH)
+    parser.add_argument("--no-scans", action="store_true",
+                        help="build without scan links, deliberately: the "
+                             "tree then carries `scans: null` in all_stats, so "
+                             "a missing count cannot read as zero scans.")
     parser.add_argument("--out", type=Path, default=TREE_PATH)
     parser.add_argument("--text-extract", type=Path, default=TEXT_EXTRACT_DIR,
                         help="rivulet's cleaned plain text, read ONLY to set "
@@ -510,6 +514,23 @@ def main() -> None:
     if not args.listings.exists():
         raise SystemExit(
             f"missing {args.listings}; run `make parse-listings-site` first.")
+    # The scan files are required like the three above. Until 2026-11-16 they
+    # were optional, and a build on a machine holding only the two expensive
+    # caches succeeded while silently dropping the whole `scans` block --
+    # the parent project's pdf_count just vanished. Scans without liveness
+    # was worse: it published the unfiltered count as if every link
+    # resolved. `--no-scans` is the deliberate way to build without them.
+    if not args.no_scans:
+        if not args.scans.exists():
+            raise SystemExit(
+                f"missing {args.scans}; run `make parse-scans` first "
+                "(or pass --no-scans to build without scan links).")
+        if not args.liveness.exists():
+            raise SystemExit(
+                f"missing {args.liveness}; run `make check-scans` first, which "
+                "is networked -- or copy it from the backup. Without it every "
+                "parsed link would publish as live. (--no-scans builds "
+                "without scan links.)")
 
     global _HAS_TEXT
     _HAS_TEXT = load_has_text(args.text_extract)
@@ -523,7 +544,7 @@ def main() -> None:
     # Loaded before the build: the counts go in `all_stats`, but the links
     # themselves have to reach each page's meta as it is made.
     scan_rows = []
-    if args.scans.exists():
+    if not args.no_scans:
         scan_rows = [json.loads(line)
                      for line in args.scans.open(encoding="utf-8")]
     # Live-only, in the interface and in the exported count alike. Anything
@@ -570,6 +591,11 @@ def main() -> None:
         # judgment sanskrit-wikisource makes for a work cited from several
         # pages, and the reason the definition lives here rather than there.
         payload["all_stats"]["pdf_count"] = payload["scans"]["sources"]
+    elif args.no_scans:
+        # Said, not omitted: "not measured" must not read as "no scans".
+        # Sāgarasaṅgama renders a null pdf_count as a dash.
+        payload["scans"] = None
+        payload["all_stats"]["pdf_count"] = None
 
     # Before the write: the date lands in the tree as well as in docs/VERSION.
     stamped = stamp_version(args.log, VERSION_PATH, args.out, payload["all_stats"])
@@ -589,7 +615,9 @@ def main() -> None:
     if stats["transliterated_bytes"]:
         ratio = stats["content_bytes"] / stats["transliterated_bytes"]
         print(f"deva:iast     {ratio:.3f}x")
-    if "scans" in payload:
+    if args.no_scans:
+        print("scans:        none (--no-scans; pdf_count published as null)")
+    elif "scans" in payload:
         scans = payload["scans"]
         note = ("live-checked" if dropped is not None
                 else "UNCHECKED -- run `make check-scans`")

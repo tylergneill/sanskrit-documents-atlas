@@ -390,6 +390,228 @@ async function loadChangelog() {
 loadChangelog();
 
 // ---------------------------------------------------------------------------
+// Deltas
+// ---------------------------------------------------------------------------
+// docs/data/deltas.json is the site's change log (`/whatisnew`) and nothing
+// else, built by pipeline/build_deltas.py: a flat list of logged events, each
+// [doc index, "YYYY-MM-DD", 1 added | 0 updated]. Grouped here into months,
+// quarters or years. Within a period each document appears once, under
+// "added" if any of its entries was an addition.
+//
+// The file is close to 1 MB, so it is fetched the first time the section is
+// opened, not on page load. Each period's lists are built only when that
+// period is expanded.
+
+const DELTAS_URL = "./data/deltas.json";
+const SITE_BASE = "https://sanskritdocuments.org";
+const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dlState = { granularity: 1, data: null, loading: false };
+
+// "2026-11-04" -> "4 Nov 2026". Read off the string: `new Date()` parses an
+// ISO date as UTC midnight, which can print the previous day locally.
+function fmtDay(iso) {
+  const [y, m, d] = iso.split("-");
+  return `${Number(d)} ${MONTH_ABBR[Number(m) - 1]} ${y}`;
+}
+
+// The calendar period an event falls in, as a sortable key and a label.
+function periodOf(iso, size) {
+  const y = Number(iso.slice(0, 4));
+  const m = Number(iso.slice(5, 7));
+  if (size >= 12) return { key: `${y}`, label: `${y}` };
+  if (size >= 3) {
+    const q = Math.floor((m - 1) / 3) + 1;
+    return { key: `${y}-Q${q}`, label: `${y} Q${q}` };
+  }
+  return { key: `${y}-${String(m).padStart(2, "0")}`, label: `${MONTH_ABBR[m - 1]} ${y}` };
+}
+
+// Every period from the log's first event to its last, empty ones included:
+// a month in which nothing was logged is itself worth seeing.
+function allPeriods(first, last, size) {
+  const out = [];
+  let y = Number(first.slice(0, 4));
+  let m = Number(first.slice(5, 7));
+  const step = size >= 12 ? 12 : size >= 3 ? 3 : 1;
+  m = step === 12 ? 1 : step === 3 ? Math.floor((m - 1) / 3) * 3 + 1 : m;
+  const end = periodOf(last, size).key;
+  for (;;) {
+    const iso = `${y}-${String(m).padStart(2, "0")}-01`;
+    const p = periodOf(iso, size);
+    out.push(p);
+    if (p.key === end) break;
+    m += step;
+    if (m > 12) { m -= 12; y += 1; }
+  }
+  return out;
+}
+
+// Events -> period key -> { added: Map(doc -> dates), updated: Map(doc -> dates) }.
+function groupDeltas(data, size) {
+  const groups = new Map();
+  for (const [doc, date, added] of data.events) {
+    const { key } = periodOf(date, size);
+    if (!groups.has(key)) groups.set(key, new Map());
+    const docs = groups.get(key);
+    if (!docs.has(doc)) docs.set(doc, { added: false, dates: [] });
+    const entry = docs.get(doc);
+    entry.added = entry.added || added === 1;
+    entry.dates.push(date);
+  }
+  const out = new Map();
+  for (const [key, docs] of groups) {
+    const added = [], updated = [];
+    for (const [doc, entry] of docs) (entry.added ? added : updated).push({ doc, dates: entry.dates });
+    out.set(key, { added, updated });
+  }
+  return out;
+}
+
+function docItem(data, row) {
+  const [docId, title] = data.docs[row.doc];
+  const [folder, stem] = docId.split("/");
+  const li = document.createElement("li");
+  if (title) {
+    const a = document.createElement("a");
+    a.href = `${SITE_BASE}/${docId}.html`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = title;
+    li.appendChild(a);
+  } else {
+    // Logged under a doc_id the corpus does not hold (renamed or removed
+    // since). Still an event the site logged, so it stays, unlinked.
+    li.appendChild(document.createTextNode(stem || docId));
+  }
+  const meta = document.createElement("span");
+  meta.className = "dl-meta";
+  meta.textContent = ` ${folder.replace(/^doc_/, "")} · ${row.dates.map(fmtDay).join(", ")}`;
+  li.appendChild(meta);
+  return li;
+}
+
+function bucketDetails(data, title, rows) {
+  const li = document.createElement("li");
+  li.className = "audit-item";
+  const det = document.createElement("details");
+  const sum = document.createElement("summary");
+  sum.className = "audit-summary";
+  sum.textContent = `${title} (${rows.length.toLocaleString()})`;
+  det.appendChild(sum);
+  det.addEventListener("toggle", () => {
+    if (!det.open || det.dataset.built) return;
+    det.dataset.built = "1";
+    const ul = document.createElement("ul");
+    ul.className = "dl-docs";
+    const sorted = [...rows].sort((a, b) =>
+      a.dates[0].localeCompare(b.dates[0]) ||
+      data.docs[a.doc][0].localeCompare(data.docs[b.doc][0]));
+    for (const row of sorted) ul.appendChild(docItem(data, row));
+    det.appendChild(ul);
+  });
+  li.appendChild(det);
+  return li;
+}
+
+// One card per period, after the wikisource atlas's Deltas: the period as a
+// title, then a muted "N added, M updated -- show detail" line that opens onto
+// the Added and Updated lists. The cards carry no size or running-total lines:
+// those would come from our own dating or measurements, not from the log.
+function periodItem(data, period, group) {
+  const card = document.createElement("div");
+  card.className = "block dl-card";
+  const added = group ? group.added : [];
+  const updated = group ? group.updated : [];
+  const title = document.createElement("div");
+  title.className = "dl-card-title";
+  title.innerHTML = `<strong>${period.label}</strong>`;
+  card.appendChild(title);
+  if (!added.length && !updated.length) {
+    const none = document.createElement("div");
+    none.className = "dl-meta";
+    none.textContent = "nothing logged";
+    card.appendChild(none);
+    return card;
+  }
+  const det = document.createElement("details");
+  const sum = document.createElement("summary");
+  sum.className = "dl-card-summary";
+  sum.innerHTML = `<span>${added.length.toLocaleString()} added, ` +
+                  `${updated.length.toLocaleString()} updated — ` +
+                  `<span class="dl-show"></span></span>`;
+  det.appendChild(sum);
+  det.addEventListener("toggle", () => {
+    if (!det.open || det.dataset.built) return;
+    det.dataset.built = "1";
+    const ul = document.createElement("ul");
+    ul.className = "dl-buckets";
+    if (added.length) ul.appendChild(bucketDetails(data, "Added", added));
+    if (updated.length) ul.appendChild(bucketDetails(data, "Updated", updated));
+    det.appendChild(ul);
+  });
+  card.appendChild(det);
+  return card;
+}
+
+function renderDeltas() {
+  const list = document.getElementById("deltasList");
+  const data = dlState.data;
+  if (!list || !data) return;
+  const size = dlState.granularity;
+  const groups = groupDeltas(data, size);
+  list.textContent = "";
+  // Newest first: the most recent period is the one a reader comes for.
+  for (const period of allPeriods(data.first, data.last, size).reverse()) {
+    list.appendChild(periodItem(data, period, groups.get(period.key)));
+  }
+  for (const btn of document.querySelectorAll("#deltasControls button")) {
+    const on = String(size) === btn.dataset.value;
+    btn.classList.toggle("cl-on", on);
+    btn.setAttribute("aria-pressed", String(on));
+  }
+}
+
+async function loadDeltas() {
+  if (dlState.data || dlState.loading) return;
+  dlState.loading = true;
+  const list = document.getElementById("deltasList");
+  try {
+    const r = await fetch(DELTAS_URL);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    dlState.data = await r.json();
+    const range = document.getElementById("deltasRange");
+    if (range) {
+      range.textContent = `${dlState.data.events.length.toLocaleString()} log entries, ` +
+        `${fmtDay(dlState.data.first)} to ${fmtDay(dlState.data.last)}.`;
+    }
+    renderDeltas();
+  } catch (e) {
+    if (list) list.textContent = "Deltas unavailable.";
+    console.log("Could not load deltas:", e);
+  } finally {
+    dlState.loading = false;
+  }
+}
+
+{
+  const block = document.getElementById("deltasBlock");
+  const controls = document.getElementById("deltasControls");
+  if (block) {
+    block.addEventListener("toggle", () => { if (block.open) loadDeltas(); });
+    if (block.open) loadDeltas();
+  }
+  if (controls) {
+    controls.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-value]");
+      if (!btn) return;
+      dlState.granularity = Number(btn.dataset.value);
+      renderDeltas();
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // The About page's one outbound link to the parent project
 // ---------------------------------------------------------------------------
 // This is the mirror image of the parent's docs/local-links.js: that file ships

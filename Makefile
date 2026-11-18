@@ -1,9 +1,10 @@
 .PHONY: serve-fulltext parse parse-listings recount snapshot-tree \
         parse-site parse-listings-site build-catalogue count-sizes build \
-        parse-scans check-scans changelog snapshot-changelog \
+        parse-scans check-scans changelog snapshot-changelog deltas \
         parse-dump-2020 audit audit-update-about \
         serve serve-snapshot \
-        fetch-metadata fetch-text extract-text free-server-port get-server-ip-address
+        fetch-metadata fetch-text fetch-whatisnew parse-whatisnew \
+        extract-text free-server-port get-server-ip-address
 
 # ============================================================================
 # GROUP 1 -- the SNAPSHOT track.  A cross-check, not the product.
@@ -66,6 +67,21 @@ fetch-metadata:
 #   make fetch-text ARGS="--limit 100"       # bounded first run
 fetch-text:
 	python -m pipeline.fetch_text $(ARGS)
+
+# The site's change log -- /whatisnew plus the yearly archive pages its footer
+# links -> data/metadata_cache/whatisnew/. ~6 requests; always refetched, since
+# the current page changes whenever the site logs anything. NETWORKED, needs
+# rivulet. ARGS="--main-only" fetches just the current page.
+#   make fetch-whatisnew
+fetch-whatisnew:
+	python -m pipeline.fetch_whatisnew $(ARGS)
+
+# Cached change-log pages (+ the 2020 snapshot's copy, when present) ->
+# data/whatisnew_events.jsonl, one row per logged event. Offline. `changelog`
+# reads it as a third dating source when it exists.
+#   make parse-whatisnew
+parse-whatisnew:
+	python -m pipeline.parse_whatisnew $(ARGS)
 
 # fulltext_cache -> data/text_extract/<location>/<stem>.txt, the cached pages
 # with everything but the work's body stripped away. No network; reads the
@@ -213,8 +229,20 @@ parse-dump-2020:
 # reaches that the mirror never held.
 ATTEST := $(if $(wildcard data/dump2020_inventory.jsonl),--attest data/dump2020_inventory.jsonl:2020-06-27)
 ATTEST += $(if $(wildcard data/snapshot_inventory.jsonl),--attest data/snapshot_inventory.jsonl:2025-02-16)
+# The site's own change log (`make parse-whatisnew`): a per-document "existed
+# by" date, so it resolves the pre-2020 years the 2020 snapshot can only floor.
+ATTEST += $(if $(wildcard data/whatisnew_events.jsonl),--attest-events data/whatisnew_events.jsonl)
 changelog:
 	python -m pipeline.build_changelog $(ATTEST) $(ARGS)
+
+# The site's change log, re-presented by period -> docs/data/deltas.json, for
+# the About page's Deltas section. Reads ONLY data/whatisnew_events.jsonl (the
+# corpus inventory just supplies titles and links), so it shows what the site
+# logged and nothing else. Needs `parse-whatisnew` and `parse-site`. Offline.
+# After a monthly refresh: fetch-whatisnew, parse-whatisnew, deltas.
+#   make deltas
+deltas:
+	python -m pipeline.build_deltas $(ARGS)
 
 # Build docs/data/snapshot_changelog.json from the EARLIER Feb-2025
 # snapshot -- 8547 documents, capped at 2025-02-16, plus a final counts-only

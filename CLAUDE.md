@@ -234,19 +234,22 @@ slugs. Re-run it whenever `ALIASES` or `mechanical()` changes.
 | `make recount` | snapshot bodies → `data/snapshot_sizes.jsonl` (~12s) |
 | `make snapshot-tree` | those three → `docs/data/snapshot_tree.json` |
 | `make snapshot-changelog` | snapshot `Latest update` → `docs/data/snapshot_changelog.json` (unpublished) |
-| **REAL track** | *our own 2026-08 fetch, 9756 docs* |
+| **REAL track** | *our own 2026-11 fetch, 9935 docs* |
 | `make parse-site` | `fulltext_cache/` → `data/site_inventory.jsonl` (no network) |
 | `make parse-listings-site` | tier-1 listing cache → `data/site_listings.jsonl` |
 | `make build-catalogue` | tier-1 listing cache → `data/catalogue.jsonl`, no network (repairs it without refetching) |
 | `make count-sizes` | `fulltext_cache/` bodies → `data/site_sizes.jsonl` (~15s) |
 | `make build` | those three → `docs/data/tree.json`, and stamps `docs/VERSION` |
 | `make parse-dump-2020` | 2020 site mirror → `data/dump2020_inventory.jsonl` (dating input, not a track) |
-| `make changelog` | `Latest update` per document, floored by the 2020 mirror → `docs/data/changelog.json` |
+| `make parse-whatisnew` | cached change-log pages → `data/whatisnew_events.jsonl` (dating input, no network) |
+| `make changelog` | `Latest update` per document, floored by the 2020 snapshot, the Feb-2025 scrape and the change log → `docs/data/changelog.json` |
+| `make deltas` | the change log alone → `docs/data/deltas.json`, the About page's Deltas section (no network) |
 | `make audit` | all six checks → a report; writes nothing. Entirely offline — no network, no rivulet |
 | `make audit-update-about` | ...and rewrite the About page's audit region and every `data-stat` figure |
 | `make serve` | serve `docs/` on :8003 |
 | `make fetch-metadata` | **networked, needs rivulet** — tier 1: sitemap + 87 listings + 20 locations → `data/metadata_cache/{listings,locations}/` + `catalogue.jsonl`. ~108 requests |
 | `make fetch-text` | **networked, needs rivulet** — tier 2: every document in the catalogue → `data/fulltext_cache/<location>/<stem>.html`. ~9781 requests, ~5.4h |
+| `make fetch-whatisnew` | **networked, needs rivulet** — the site's change log, main page + yearly archives → `data/metadata_cache/whatisnew/`. ~6 requests, always refetched |
 
 ## The About page's figures are generated, not typed
 
@@ -279,7 +282,29 @@ the tree it ships beside is the drift this exists to prevent.
 site-derived caches are expensive; everything else rebuilds locally in seconds.
 
     data/metadata_cache/    108 requests -- the index, and the scrape list
-    data/fulltext_cache/    9756 documents, 315 MB, ~5.5h -- the corpus itself
+    data/fulltext_cache/    ~9,950 documents, ~340 MB, ~5.5h -- the corpus itself
+    data/archive/           IRREPLACEABLE: old pages the site no longer
+                            serves in that form, with notes.jsonl saying why
+
+**`archive/` keeps text the site has arguably lost**, so it can be raised with
+the site admin. The site changes a lot and most of it is improvement, so
+proofreading, reformatting and additions are not archived, and neither is a
+rename whose text survives under the new doc_id. After a full
+refetch:
+1. The previous fetch state is moved aside as `data/archive-<date>/`.
+2. An agent compares the text content of every document, old vs new. It
+   ignores the page's metadata block and served-HTML noise, and it checks
+   whether vanished text survives elsewhere on the site.
+3. The agent and the user decide together, case by case, which changes are
+   arguable loss. The old raw page, plus its extracted text, is copied to
+   `data/archive/<doc_id>.html`, and is never overwritten (a second copy goes
+   beside it as `<doc_id> @<fetched date>.html`).
+4. Each archived page gets a row in `archive/notes.jsonl` saying what was lost.
+5. Only then is the aside folder deleted and `data/` mirrored to the backup
+   drive (`/Volumes/Gaston/atlases/sanskrit-documents-atlas/data/`).
+
+Additions are not loss, but they belong in the changelog, so check whether the
+change log recorded them.
 
 **The cache is the resume state.** Unlike the sibling atlas, there is no cursor
 to carry: `fetch_text` treats "file on disk" as "done", so the journal
@@ -315,9 +340,9 @@ already held — check with `make free-server-port` when the data looks wrong.
 They write different files and are alternatives, and which one the frontend
 gets is a **serve-time** flag (`make serve-snapshot`), never a build-time one.
 
-    build               site_inventory + site_listings + site_sizes  -> tree.json                9756 docs
+    build               site_inventory + site_listings + site_sizes  -> tree.json                9935 docs
     snapshot-tree       snapshot_* equivalents                       -> snapshot_tree.json       8547 docs
-    changelog           site_inventory + site_sizes                  -> changelog.json           9756 docs
+    changelog           site_inventory + site_sizes                  -> changelog.json           9935 docs
     snapshot-changelog  snapshot_* equivalents                       -> snapshot_changelog.json  8547 docs
 
 This separation dates from 2026-08-18. Before it, **`build` read the snapshot's
@@ -344,7 +369,7 @@ in `docs/VERSION` — editing that file by hand is what let it sit at
 
 ## The changelog is growth, not revision history
 
-`make changelog` buckets documents by their own `Latest update` (9754 of 9756
+`make changelog` buckets documents by their own `Latest update` (9934 of 9935
 parse; the field is free text and needs a forgiving parser — abbreviated months,
 `Julu`, `August 43`, `11-Feb-2015`). **The site keeps only the most recent touch
 per document**, so a text encoded in 2004 and reproofed in 2023 appears once,
@@ -353,17 +378,41 @@ under 2023. Don't describe this as a revision history.
 **Since 2026-08-20 the real track floors those dates against a third corpus**, a
 2020-06-27 site mirror (`make parse-dump-2020`, 4739 docs). Presence in it proves
 a document existed by then whatever its stamp claims, so `build_changelog
---attest` buckets it by `min(latest_update, 2020-06-27)`. That pulls 751
-documents back and lifts the pre-2020 collection 19.2%. A bucket now means
+--attest` buckets it by `min(latest_update, 2020-06-27)`. That pulls 768
+documents back and lifts the pre-2020 collection 19.7%. A bucket now means
 "documents known to exist by then" — closer to real growth than "last touched on
-or before then" was, and still a lower bound, since the mirror covers 4535 of
-9756 and only catches stamps that are wrongly *late*.
+or before then" was, and still a lower bound, since the mirror covers 4545 of
+9935 and only catches stamps that are wrongly *late*.
 
 **The mirror is a dating input, not a build track.** Nothing is served from it,
 no tree is built from it, and `snapshot-changelog` does not use it — the
 snapshot must keep reporting what the snapshot alone can support. The Makefile
 passes `--attest` only when `data/dump2020_inventory.jsonl` exists, so a machine
 without the mirror still builds, just to the looser bound.
+
+**Since 2026-11-16 a third source dates documents: the site's own change log**
+(`/whatisnew` and its yearly archives, `make fetch-whatisnew` then
+`make parse-whatisnew` -> `data/whatisnew_events.jsonl`). Each document's first
+logged event is an "existed by" date, merged with the dumps by taking the
+earliest (`build_changelog --attest-events`, `merge_floors`). Unlike a dump it
+dates documents one at a time, so it resolves the pre-2020 years the 2020
+snapshot can only floor at June 2020. With it the chart pulls back 1520
+documents instead of 820. Like the snapshot it is optional and real-track
+only: the Makefile passes it when the events file exists, and
+`snapshot-changelog` never does.
+
+**`Latest update` is hand-maintained**, and the site admin has said it may be
+inaccurate. Treat it as one of three unequal sources, not ground truth. The
+change log is precise but incomplete: every logged update was a real change, but
+it named 17% of Aug→Nov 2026 text changes, and deleting or renaming a document
+erases its entries. So it corrects dates and never proves a document unchanged.
+See `notes/scratch/whatisnew.md`.
+
+**The About page's Deltas section is the log and nothing else** (since
+2026-11-18, `make deltas`). It deliberately ignores the dating above, so it
+reads as the site's own record, regrouped. The corpus only supplies titles and
+links. Where the log falls short belongs in Data Quality, not in Deltas.
+After a monthly refresh, run `fetch-whatisnew`, `parse-whatisnew` and `deltas`.
 
 **It is two-track like `build`**, and became so on 2026-08-19 — the 2026-08-18
 split covered the tree and missed this. Until then the published curve was the
@@ -382,7 +431,7 @@ genuinely-2026 documents back into February 2025.
 `--catalogue` folds documents the live catalogue lists but the corpus lacks into
 a final `sizes_partial` bucket. **On by default only for the snapshot**, which
 is 1254 documents behind; on the real track the corpus *is* the catalogue and
-the residue is just the 25 documents the site 404s.
+the residue is just the 22 documents the site 404s.
 
 ## Clean-text output lives in rivulet
 
@@ -417,9 +466,9 @@ The page holds two `<pre>` blocks and only one is the work:
     <PRE itemprop="text" class="stotra" id="content" lang="sa">   the text
     <pre class="inf">                                             the metadata
 
-Selected by **`id="content"`, not by class** — the class varies (`stotra` 9528,
-`vedic` 157, `shobhika` 68, `namavali` 1) while the id is on all 9754 of the
-9756 cached pages. The two without one
+Selected by **`id="content"`, not by class** — the class varies (`stotra` 9705,
+`vedic` 157, `shobhika` 70, `namavali` 1) while the id is on all 9933 of the
+9935 cached pages. The two without one
 (`doc_devii/siddhasarasvatIstotram2`, `doc_vishhnu/viShNorapAmArjanastotram`)
 are genuine metadata-only stubs, reported as such rather than raised on.
 
@@ -469,5 +518,6 @@ What replaces the cap is **rate, not budget** — the constraint that was always
 doing the real work. Every fetcher stays single-threaded, one request per
 `--delay` (default 2s) measured start-to-start, with a contact-bearing
 User-Agent, backing off and stopping on 429/5xx rather than retrying into a
-wall. Keep those properties in anything new; they are the terms, not the cap.
+wall, and stopping outright, unretried, after a few consecutive 401/403s,
+since a block is fatal to the run rather than to the document. Keep those properties in anything new; they are the terms, not the cap.
 

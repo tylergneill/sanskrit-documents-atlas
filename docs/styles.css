@@ -590,8 +590,13 @@ a.topbar-link:hover { text-decoration: underline; }
   border-bottom-color: var(--muted);
 }
 details[open] > .audit-summary::before{ transform: rotate(45deg); }
+/* The :first-of-type twin is needed for a NESTED section's heading: the h3
+   in its summary is also the first h3 in the outer block, so the content rule
+   `.block.collapsible h3:first-of-type` below outranks a plain `summary h3` and
+   pushes the title 14px below its arrow. */
 .content .block.collapsible > summary h2,
-.content .block.collapsible > summary h3{ margin: 0; }
+.content .block.collapsible > summary h3,
+.content .block.collapsible > summary h3:first-of-type{ margin: 0; }
 .content .block.collapsible > summary::before{
   content: "";
   display: inline-block;
@@ -1437,3 +1442,23 @@ span[data-stat] { font-weight: 700; }
   padding: 0 4px;
 }
 .localTxtLink:hover { opacity: 1; }
+
+/* --- deltas (about.html) ---------------------------------------------- */
+/* One .block card per period, after the wikisource atlas's Deltas. Inside a
+   card, Added/Updated use the same .audit-item disclosure as the Data Quality
+   findings; only the innermost level is a plain list. */
+.dl-list{ margin: 8px 0 0; }
+.content .block.dl-card{ margin: 0 0 10px; padding: 10px 14px; }
+.dl-card-title{ margin: 0 0 2px; }
+.dl-card-summary{
+  cursor: pointer; list-style: none;
+  color: var(--muted); font-size: 0.9em;
+}
+.dl-card-summary::-webkit-details-marker{ display: none; }
+.dl-show{ color: var(--accent); }
+.dl-show::before{ content: "show detail"; }
+details[open] > .dl-card-summary .dl-show::before{ content: "hide detail"; }
+.dl-buckets{ padding-left: 0; margin: 6px 0 0; }
+.dl-docs{ padding-left: 1.6em; margin: 2px 0 6px; }
+.dl-docs li{ padding: 1px 0; overflow-wrap: anywhere; }
+.dl-meta{ color: var(--muted); font-size: 0.9em; }

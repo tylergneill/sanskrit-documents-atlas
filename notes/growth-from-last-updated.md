@@ -16,6 +16,14 @@ and overstates recent ones.
 It is used as axis 2 anyway, because revision is rare enough — and because
 attestation raises the floor where older observations exist.
 
+**The field is hand-maintained**, and the site admin has said by email
+(2026-11) that it may not be accurate. Measured against the site's own change
+log (`/whatisnew`, see `scratch/whatisnew.md`), it is wrong in both directions:
+1,550 documents have a logged update later than their stamp, and 365 a stamp
+later than any logged event. So treat it as one of three unequal sources — the
+stamp, the change log, and the 2020 snapshot — and take each document's
+earliest well-attested date. None of them needs full coverage to help.
+
 ## The revision rate is a property of the interval, not the corpus
 
 Three observations exist: a 2020-06 site mirror (`parse_dump_2020`), the

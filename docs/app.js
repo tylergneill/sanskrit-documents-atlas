@@ -1813,7 +1813,9 @@ function openFilterEditor() {
 
   const renderMenu = () => {
     menu.innerHTML = "";
-    const options = filterOptions(input.value).slice(0, 50);
+    // Every option, not a top slice: the menu scrolls, and a cap at 50 hid
+    // most of the categories with nothing saying they existed.
+    const options = filterOptions(input.value);
     if (!options.length) {
       menu.appendChild(el("div", { class: "filterMenuEmpty" }, "no matches"));
       return;
