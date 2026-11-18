@@ -54,6 +54,7 @@ from pathlib import Path
 from pipeline.config import (CATALOGUE_PATH, CHANGELOG_PATH,
                             SITE_INVENTORY_PATH, SITE_SIZES_PATH,
                             TEXT_LOG_PATH)
+from pipeline.parse_whatisnew import id_resolver
 
 STAT_KEYS = ("raw_bytes", "content_bytes", "transliterated_bytes")
 
@@ -209,25 +210,18 @@ def load_event_attestations(path: Path | None,
     log errs late only (it is pruned, never back-dated), so a `min` against the
     other sources is safe.
 
-    Log ids are matched exactly, then by a unique case-insensitive match: the
-    log's hand-typed hrefs differ in case from the served path now and then,
-    and a case-insensitive id shared by two documents (the 34 case-clash pairs)
-    is skipped rather than guessed.
+    Log ids are matched by `parse_whatisnew.id_resolver`, the same matching
+    `build_deltas` uses.
     """
     if path is None or not path.exists():
         return {}
-    by_lower: dict[str, list[str]] = defaultdict(list)
-    for doc_id in doc_ids:
-        by_lower[doc_id.lower()].append(doc_id)
+    resolve = id_resolver(doc_ids)
     first: dict[str, datetime] = {}
     for line in path.open(encoding="utf-8"):
         event = json.loads(line)
-        doc_id = event["doc_id"]
-        if doc_id not in doc_ids:
-            matches = by_lower.get(doc_id.lower(), [])
-            if len(matches) != 1:
-                continue
-            doc_id = matches[0]
+        doc_id = resolve(event["doc_id"])
+        if doc_id is None:
+            continue
         when = datetime.fromisoformat(event["date"]).replace(tzinfo=timezone.utc)
         if doc_id not in first or when < first[doc_id]:
             first[doc_id] = when

@@ -146,6 +146,27 @@ def parse_events(page: str) -> tuple[list[dict], list[str]]:
     return events, unread
 
 
+def id_resolver(doc_ids: set[str]):
+    """A log doc_id -> the corpus doc_id it names, or None.
+
+    Exact match first, then a unique case-insensitive one: the log's hrefs are
+    hand-typed and differ in case from the served path now and then. A
+    lowercased id shared by two documents (the case-clash pairs) is left
+    unresolved rather than guessed.
+    """
+    by_lower: dict[str, list[str]] = {}
+    for doc_id in doc_ids:
+        by_lower.setdefault(doc_id.lower(), []).append(doc_id)
+
+    def resolve(log_id: str) -> str | None:
+        if log_id in doc_ids:
+            return log_id
+        matches = by_lower.get(log_id.lower(), [])
+        return matches[0] if len(matches) == 1 else None
+
+    return resolve
+
+
 def collect(cache: Path, dump_copy: Path | None) -> tuple[list[dict], Counter]:
     """Every cached page, plus the 2020 snapshot's copy if given, deduplicated."""
     sources = sorted(cache.glob("*.html")) if cache.is_dir() else []

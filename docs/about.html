@@ -39,7 +39,7 @@
   </header>
 
   <main class="mainpane" style="height: calc(100% - 48px); display:flex; justify-content:center;">
-    <section class="content" style="width:100%; max-width:900px;">
+    <section class="content" style="width:100%; max-width:900px; align-self:flex-start;">
       <div class="block">
         <h2 id="about" style="margin-top:0;">About</h2>
         <p>
@@ -804,7 +804,7 @@
       </details>
 
       <details class="block collapsible">
-        <summary><h2 id="data-quantity">Data Quantity: Historical Trends</h2></summary>
+        <summary><h2 id="data-quantity">Data Quantity: Historical Trends and Deltas</h2></summary>
         <div id="changelogControls" class="cl-controls">
         <span class="cl-ctl-group"><span class="cl-ctl-label">measure</span>
           <span class="cl-seg"><button type="button" data-axis="metric" data-value="count">document count</button><button
@@ -819,55 +819,94 @@
         </div>
         <div id="changelogChart">Loading…</div>
         <p style="margin-top:12px;">
-          Every document records its own <em>Latest update</em>,
-          and all but <span data-stat="dates_unusable">9</span> of
-          <strong><span data-stat="total">9,935</span></strong> can be placed in a year.
-          That field is the only date carried by every document,
-          but it is a poor measure of growth:
-          it is maintained by hand and records only the most recent touch.
-          Any modified document therefore drifts forward in time —
-          leaving the year it arrived and landing in the year it was last edited —
-          which skews the graph toward the present.
-          Three other sources pull documents back toward when they actually arrived.
-        </p>
-        <p>
-          Two of them are earlier copies of the
-          corpus, each proving that whatever a document's stamp says, it was
-          already there when the copy was taken. One is a
-          <strong>complete copy of the site from June 2020</strong>
-          <a href="https://github.com/lalitaalaalitah/sanskrit-documents-dump" target="_blank">on GitHub</a>;
-          the other is an earlier scrape by the author of this Atlas, from February 2025.
-          Attestation can only ever move a document earlier, never later, so a
-          second copy adds corrections without undoing any.
-          Between the two they pull
-          <strong><span data-stat="attested_pulled_back">820</span> documents</strong>
-          back to a more correct date —
-          <span data-stat="attested_pulled_pre2020_pct">94</span>% of them to
-          somewhere before mid-2020, the remaining
-          <span data-stat="attested_pulled_mid_pct">6</span>% into the years
-          between — and they put a date on
-          <span data-stat="bad_dates_rescued">9</span> of the documents whose
-          own field is unusable (see <a href="#data-quality">above</a>).
-        </p>
-        <p>
-          The third is the site's own change log,
-          <a href="https://sanskritdocuments.org/whatisnew" target="_blank">What's New</a>,
+          The chart places each document at the earliest date it is known to have existed.
+          The main evidence is the site's own change log,
+          <a href="https://sanskritdocuments.org/whatisnew" target="_blank"><code>whatisnew</code></a>,
           which has recorded additions and updates since April 2010:
           <span data-stat="log_events">12,853</span> entries naming
-          <span data-stat="log_documents">9,341</span> of the documents here.
-          A document's first entry likewise proves it existed by that date,
-          and because the log dates each document individually rather than
-          the corpus as a whole, it can place documents within the years the
-          June 2020 copy can only bound.
-          In all, the three sources place
-          <strong><span data-stat="all_pulled_back">1,520</span> documents</strong>
-          earlier than their own stamp, and the log is the earliest evidence for
-          <span data-stat="log_pulled_back">842</span> of them —
-          <span data-stat="log_pulled_pre2020">505</span> landing before mid-2020.
-          The log is incomplete — it has gaps in 2011–2016,
-          and deleting or renaming a document removes its entries —
-          so like the copies it can only correct dates, never replace them.
+          <span data-stat="log_documents">9,341</span> of the
+          <span data-stat="total">9,935</span> documents here.
+          A document's first entry shows that it existed by that date.
+          This moves <strong><span data-stat="log_pulled_back">1,413</span> documents</strong>
+          earlier than the date they carry themselves (<code>latest_update</code> metadata field).
         </p>
+        <p>
+          Two earlier copies of the site fill in where the log is thin.
+          They move <strong><span data-stat="copies_pulled_back">426</span> more documents</strong>
+          earlier than both their <code>latest_update</code> and the log,
+          <span data-stat="copies_unlogged">50</span> of them documents the log never names.
+          In all, <strong><span data-stat="all_pulled_back">1,520</span> documents</strong>
+          sit earlier than their <code>latest_update</code>, and
+          <span data-stat="bad_dates_rescued">9</span> whose <code>latest_update</code> is unusable are placed anyway.
+          Every other document is placed by its <code>latest_update</code>.
+        </p>
+        <ul style="list-style: none; padding-left: 0; margin: 0 0 14px;">
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Why not just use <code>latest_update</code>?</span></summary>
+          <div style="margin: 8px 0 0 1.6em;">
+        <p>
+          Every document carries a <code>latest_update</code> (shown on the site as <em>Latest update</em>),
+          and all but <span data-stat="dates_unusable">9</span> can be placed in a year.
+          It is the only date every document carries, but it is a poor measure of growth:
+          it is maintained by hand, and not fully consistently:
+          substantive edits usually update it, while smaller corrections often leave it untouched.
+          Where it was updated, it records only the most recent touch,
+          so the document drifts forward in time,
+          leaving the year it arrived and landing in the year it was last edited,
+          which would skew the chart toward the present.
+        </p>
+          </div>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>Where the log falls short</span></summary>
+          <div style="margin: 8px 0 0 1.6em;">
+        <p>
+          The log has gaps, thinnest in 2011–2016,
+          and deleting or renaming a document removes its entries,
+          so a renamed document loses the date it was first added.
+          It also names only some of the edits made to documents already on the site.
+          So it can only move a document earlier, never later:
+          a document it does not mention keeps its <code>latest_update</code>.
+        </p>
+          </div>
+          </details></li>
+          <li class="audit-item"><details>
+            <summary class="audit-summary"><span>The earlier copies</span></summary>
+          <div style="margin: 8px 0 0 1.6em;">
+        <p>
+          One is a <strong>complete copy of the site from June 2020</strong>
+          <a href="https://github.com/lalitaalaalitah/sanskrit-documents-dump" target="_blank">on GitHub</a>;
+          the other is an earlier scrape by the author of this Atlas, from February 2025.
+          A document present in a copy was there when the copy was taken,
+          whatever its <code>latest_update</code> says.
+          The June 2020 copy does nearly all of the work, because it reaches
+          the years where the log is thinnest; it can only bound them, though,
+          not place documents within them.
+        </p>
+          </div>
+          </details></li>
+        </ul>
+
+        <details class="block collapsible" id="deltasBlock">
+          <summary><h3 id="deltas">Deltas</h3></summary>
+          <p>
+            What the site's own change log,
+            <a href="https://sanskritdocuments.org/whatisnew" target="_blank"><code>whatisnew</code></a>,
+            records as added and updated, by period.
+            This section reads <strong>only that log</strong>.
+            It does not use the dating above, and it does not fill the log's gaps.
+            A document that appears in the log more than once within a period is listed once:
+            under <em>added</em> if any of its entries was an addition, otherwise under <em>updated</em>.
+          </p>
+          <div id="deltasControls" class="cl-controls">
+            <span class="cl-ctl-group"><span class="cl-ctl-label">period</span>
+              <span class="cl-seg"><button type="button" data-value="1">month</button><button
+                    type="button" data-value="3">quarter</button><button
+                    type="button" data-value="12">year</button></span></span>
+          </div>
+          <p id="deltasRange" class="small"></p>
+          <div id="deltasList" class="dl-list">Loading…</div>
+        </details>
       </details>
     </section>
   </main>

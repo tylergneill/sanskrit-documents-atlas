@@ -125,6 +125,7 @@ SNAPSHOT_TREE_PATH = DOCS_DATA_DIR / "snapshot_tree.json"
 # whenever the fetch ran. Only the real one is published.
 CHANGELOG_PATH = DOCS_DATA_DIR / "changelog.json"
 SNAPSHOT_CHANGELOG_PATH = DOCS_DATA_DIR / "snapshot_changelog.json"
+DELTAS_PATH = DOCS_DATA_DIR / "deltas.json"
 
 SUBPAGE_DIRNAME = "subpage_html_dls"
 DOCPAGE_DIRNAME = "docpage_html_dls"

@@ -1,6 +1,6 @@
 .PHONY: serve-fulltext parse parse-listings recount snapshot-tree \
         parse-site parse-listings-site build-catalogue count-sizes build \
-        parse-scans check-scans changelog snapshot-changelog \
+        parse-scans check-scans changelog snapshot-changelog deltas \
         parse-dump-2020 audit audit-update-about \
         serve serve-snapshot \
         fetch-metadata fetch-text fetch-whatisnew parse-whatisnew \
@@ -234,6 +234,15 @@ ATTEST += $(if $(wildcard data/snapshot_inventory.jsonl),--attest data/snapshot_
 ATTEST += $(if $(wildcard data/whatisnew_events.jsonl),--attest-events data/whatisnew_events.jsonl)
 changelog:
 	python -m pipeline.build_changelog $(ATTEST) $(ARGS)
+
+# The site's change log, re-presented by period -> docs/data/deltas.json, for
+# the About page's Deltas section. Reads ONLY data/whatisnew_events.jsonl (the
+# corpus inventory just supplies titles and links), so it shows what the site
+# logged and nothing else. Needs `parse-whatisnew` and `parse-site`. Offline.
+# After a monthly refresh: fetch-whatisnew, parse-whatisnew, deltas.
+#   make deltas
+deltas:
+	python -m pipeline.build_deltas $(ARGS)
 
 # Build docs/data/snapshot_changelog.json from the EARLIER Feb-2025
 # snapshot -- 8547 documents, capped at 2025-02-16, plus a final counts-only

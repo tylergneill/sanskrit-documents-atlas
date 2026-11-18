@@ -54,6 +54,8 @@ atlas builds normally:
   `docs/VERSION` with the date the corpus was actually scraped
 - `make changelog` — each document's own `Latest update` →
   `docs/data/changelog.json`, bucketed by month
+- `make deltas` — the site's change log (`/whatisnew`), and nothing else →
+  `docs/data/deltas.json`, listed by month/quarter/year on the About page
 - `make serve` — serve `docs/` on :8003
 
 `build` errors and names whichever of its three inputs is missing. Byte counts

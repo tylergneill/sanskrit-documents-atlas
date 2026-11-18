@@ -67,7 +67,7 @@ from pathlib import Path
 
 from pipeline import parse_snapshot
 from pipeline.build_changelog import (corpus_date, load_attestations,
-                                      load_event_attestations, merge_floors,
+                                      load_event_attestations,
                                       parse_update)
 from pipeline.config import (CATALOGUE_PATH, DOCS_DATA_DIR, DUMP_2020_DATE,
                              DUMP_2020_INVENTORY_PATH, INVENTORY_PATH,
@@ -110,15 +110,16 @@ EXTERNAL_STATS = frozenset({"scans_checked"})
 # absent on a fresh checkout -- so like EXTERNAL_STATS these keep whatever the
 # page already publishes rather than being blanked or recomputed to a wrong
 # value from a corpus that cannot see the mirror.
-MIRROR_STATS = frozenset({"attested_pulled_back",
-                          "attested_pulled_pre2020_pct",
-                          "attested_pulled_mid_pct"})
+MIRROR_STATS = frozenset({"copies_pulled_back", "copies_unlogged"})
 
 # Figures only the site's change log can measure. Its cache
 # (`data/whatisnew_events.jsonl`) is local-only like the mirror, so a machine
 # without it keeps the published figure rather than blanking it.
+# `all_pulled_back` and `bad_dates_rescued` need either source, and are kept
+# only when neither is present.
 LOG_STATS = frozenset({"log_events", "log_documents", "log_pulled_back",
-                       "log_pulled_pre2020", "all_pulled_back"})
+                       "all_pulled_back",
+                       "bad_dates_rescued"})
 
 # How many examples a finding lists before it stops. A finding is meant to be
 # actionable, not exhaustive: 76 links is a list someone can work through, 9756
@@ -761,95 +762,71 @@ def intro_stats(documents, listings, catalogue, sizes, scans, liveness,
     stats["category_not_matching_a_topic_top_count"] = top_unmatched[0]
     stats["category_not_matching_a_topic_top_name"] = top_unmatched[1]
 
-    # The 2020 mirror's corrective, re-derived rather than read back from
-    # `changelog.json`: presence in a dated dump proves a document existed by
-    # then whatever its `Latest update` claims, and `Latest update` only ever
-    # errs late. Must mirror `build_changelog` exactly -- same
-    # `load_attestations`, same `parse_update`, same ceiling -- since the page
+    # The dating correctives, re-derived rather than read back from
+    # `changelog.json`, and must mirror `build_changelog` exactly -- same
+    # loaders, same `parse_update`, same ceiling, same `min` -- since the page
     # and the chart publish the same correction.
     #
-    # The mirror is local-only and not every machine has it, exactly as the
-    # Makefile assumes when it passes `--attest` conditionally. But the stat
-    # contract needs the key present either way, so an absent mirror keeps the
-    # figure already in the page rather than publishing a wrong one: the
-    # correction is a fact about the mirror, and a machine that cannot see it
-    # has nothing to say about it.
+    # **Log first, copies second**, the order the About page tells it in. The
+    # site's change log dates documents one at a time, so it is the primary
+    # corrective: `log_*` counts what it does against the stamp alone. The two
+    # older copies are then counted for what they add on top of it -- documents
+    # they place earlier than both the stamp and the log (`copies_*`), mostly in
+    # the log's thin early years, and some the log never names at all.
+    #
+    # Each input is local-only, so each group of figures is published only
+    # when its input exists; otherwise the page keeps what it already says
+    # (MIRROR_STATS / LOG_STATS). A machine that cannot see a source has
+    # nothing to say about it.
     ceiling = corpus_date(TEXT_LOG_PATH)
-    # Both corpora, exactly as the Makefile's `ATTEST` passes them -- a figure
-    # here derived from fewer dumps than the chart uses would disagree with the
-    # chart it sits beside. Each is included only if its inventory exists, so a
-    # machine with neither still runs and keeps whatever the page publishes.
+    # Both corpora, exactly as the Makefile's `ATTEST` passes them.
     sources = [(DUMP_2020_INVENTORY_PATH, DUMP_2020_DATE),
                (INVENTORY_PATH, SNAPSHOT_DATE)]
-    attested = load_attestations(
+    copies = load_attestations(
         [f"{path}:{date}" for path, date in sources if path.exists()])
-    pulled_back = pulled_pre = 0
-    cutoff = datetime.datetime.fromisoformat(DUMP_2020_DATE).replace(
-        tzinfo=datetime.timezone.utc)
-    for doc in documents:
-        when = parse_update(doc.get("latest_update") or "", ceiling)
-        floor = attested.get(doc["doc_id"])
-        # A floor only ever lowers a date -- the bucket is a `min` over the
-        # stamp and every attestation -- so adding a corpus can pull a document
-        # earlier or leave it alone, never push it later. Checked: zero
-        # documents bucket later with both dumps than with the mirror alone.
-        if floor is not None and when is not None and floor < when:
-            pulled_back += 1
-            if floor <= cutoff:
-                pulled_pre += 1
-    # Documents with no usable date of their own that an earlier corpus can
-    # still place. Distinct from `dates_unusable`, which counts broken fields
-    # whether or not anything can date them -- the two are equal only while
-    # every unusable document happens to sit in one of the dumps.
-    stats["bad_dates_rescued"] = sum(
-        1 for doc in documents
-        if parse_update(doc.get("latest_update") or "", ceiling) is None
-        and attested.get(doc["doc_id"]) is not None)
-    if attested:
-        stats["attested_pulled_back"] = pulled_back
-        # Where they land. The mirror is the only corpus that can carry a
-        # document across the 2020 line, so this split is also which dump did
-        # the work -- and it is why the pre-2020 share is nearly all of it.
-        stats["attested_pulled_pre2020_pct"] = round(
-            pulled_pre / pulled_back * 100) if pulled_back else 0
-        stats["attested_pulled_mid_pct"] = (
-            100 - stats["attested_pulled_pre2020_pct"] if pulled_back else 0)
-
-    # The site's change log, on top of the dumps. Same `min` the chart takes
-    # (`build_changelog` merges the same two loaders with `merge_floors`), so
-    # this counts exactly the documents the log moves earlier than both their
-    # stamp and every dump -- what it adds, not what it repeats.
     logged = load_event_attestations(WHATISNEW_EVENTS_PATH,
                                      {d["doc_id"] for d in documents})
-    if logged:
-        events = sum(1 for _ in WHATISNEW_EVENTS_PATH.open(encoding="utf-8"))
-        combined = merge_floors(attested, logged)
-        log_back = log_pre = all_back = 0
-        for doc in documents:
-            stamp = parse_update(doc.get("latest_update") or "", ceiling)
-            before = min((d for d in (stamp, attested.get(doc["doc_id"])) if d),
-                         default=None)
-            after = combined.get(doc["doc_id"])
-            if after is not None and before is not None and after < before:
-                log_back += 1
-                if after < cutoff:
-                    log_pre += 1
-            # The chart's own "pulled back" count: earlier than the stamp by
-            # any source. Not the sum of the per-source figures -- a document
-            # the copies move and the log then moves further is in both.
-            if after is not None and stamp is not None and after < stamp:
-                all_back += 1
+    # No "before mid-2020" split: that line belongs to the June 2020 copy alone
+    # (it can only say "existed by then"), so it is meaningless for the log,
+    # which dates each document separately, and near-tautological for the
+    # copies, whose corrections land there by construction.
+    log_back = copies_back = copies_unlogged = 0
+    all_back = rescued = 0
+    for doc in documents:
+        doc_id = doc["doc_id"]
+        stamp = parse_update(doc.get("latest_update") or "", ceiling)
+        log_floor, copy_floor = logged.get(doc_id), copies.get(doc_id)
+        if stamp is None:
+            # No usable date of its own, but some source can still place it.
+            # Distinct from `dates_unusable`, which counts broken fields
+            # whether or not anything can date them.
+            rescued += (log_floor or copy_floor) is not None
+            continue
+        if log_floor is not None and log_floor < stamp:
+            log_back += 1
+        # What the copies add: earlier than the stamp AND the log. A floor only
+        # ever lowers a date, so a copy can add a correction, never undo one.
+        best_so_far = min(d for d in (stamp, log_floor) if d is not None)
+        if copy_floor is not None and copy_floor < best_so_far:
+            copies_back += 1
+            copies_unlogged += log_floor is None
+        # The chart's own "pulled back" count: earlier than the stamp by any
+        # source. Not the sum of the two groups -- a document the log moves
+        # and a copy then moves further is in both.
+        if min(d for d in (stamp, log_floor, copy_floor) if d is not None) < stamp:
+            all_back += 1
+
+    if logged or copies:
+        stats["bad_dates_rescued"] = rescued
         stats["all_pulled_back"] = all_back
-        # The chart dates an unusable stamp from the log too, so the page's
-        # rescue count has to include it -- recounted over the merged floors.
-        stats["bad_dates_rescued"] = sum(
-            1 for doc in documents
-            if parse_update(doc.get("latest_update") or "", ceiling) is None
-            and combined.get(doc["doc_id"]) is not None)
-        stats["log_events"] = events
+    if logged:
+        stats["log_events"] = sum(
+            1 for _ in WHATISNEW_EVENTS_PATH.open(encoding="utf-8"))
         stats["log_documents"] = len(logged)
         stats["log_pulled_back"] = log_back
-        stats["log_pulled_pre2020"] = log_pre
+    if copies:
+        stats["copies_pulled_back"] = copies_back
+        stats["copies_unlogged"] = copies_unlogged
 
     # Cataloguing.
     stats["languages"] = len(

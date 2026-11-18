@@ -171,7 +171,7 @@ nobody runs.
 
       **Run (next month):** first `make refresh`, then read the plan and
       the report. Then the usual rebuild: `parse-site parse-listings-site
-      count-sizes extract-text build changelog audit-update-about`, then
+      count-sizes extract-text build changelog deltas audit-update-about`, then
       `make data` in sagara-sangama. Before the first run, copy
       `data/fulltext_cache/` to Gaston, as the pre-refresh baseline.
 

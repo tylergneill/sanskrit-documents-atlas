@@ -243,6 +243,7 @@ slugs. Re-run it whenever `ALIASES` or `mechanical()` changes.
 | `make parse-dump-2020` | 2020 site mirror → `data/dump2020_inventory.jsonl` (dating input, not a track) |
 | `make parse-whatisnew` | cached change-log pages → `data/whatisnew_events.jsonl` (dating input, no network) |
 | `make changelog` | `Latest update` per document, floored by the 2020 snapshot, the Feb-2025 scrape and the change log → `docs/data/changelog.json` |
+| `make deltas` | the change log alone → `docs/data/deltas.json`, the About page's Deltas section (no network) |
 | `make audit` | all six checks → a report; writes nothing. Entirely offline — no network, no rivulet |
 | `make audit-update-about` | ...and rewrite the About page's audit region and every `data-stat` figure |
 | `make serve` | serve `docs/` on :8003 |
@@ -406,6 +407,12 @@ change log is precise but incomplete: every logged update was a real change, but
 it named 17% of Aug→Nov 2026 text changes, and deleting or renaming a document
 erases its entries. So it corrects dates and never proves a document unchanged.
 See `notes/scratch/whatisnew.md`.
+
+**The About page's Deltas section is the log and nothing else** (since
+2026-11-18, `make deltas`). It deliberately ignores the dating above, so it
+reads as the site's own record, regrouped. The corpus only supplies titles and
+links. Where the log falls short belongs in Data Quality, not in Deltas.
+After a monthly refresh, run `fetch-whatisnew`, `parse-whatisnew` and `deltas`.
 
 **It is two-track like `build`**, and became so on 2026-08-19 — the 2026-08-18
 split covered the tree and missed this. Until then the published curve was the
