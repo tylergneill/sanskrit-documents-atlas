@@ -182,6 +182,12 @@ nobody runs.
       `log_pulled_back` doesn't drop unexpectedly. Also served-HTML changes
       like November's Cloudflare front: if many unlogged control documents
       "change", diff one before believing it.
+- [x] **Two whatisnew audit findings for the site admin.** Done 2026-11-18:
+      "Documents missing from the change log" and "Change-log entries for
+      documents no longer listed" (split into moves and removals), in
+      `audit.py`. The ~440-request check of whether the unlisted entries'
+      links are actually dead was not run; the finding says "no longer
+      listed", not "dead".
 - [ ] **42 documents are linked from listings only as cross-references**, as
       absolute `https://sanskritdocuments.org/doc_…` links inside another
       entry's "(stotram, nAmAvalI)" parenthetical, so they're in no catalogue.

@@ -32,7 +32,7 @@ published figure gets re-derived.
 
 ## The checks
 
-Five upstream defects, plus one of our own:
+Upstream defects, plus one of our own:
 
 1. **Listed but not served** -- the catalogue links it, the site 404s it.
 2. **Malformed catalogue hrefs** -- a space in a path, a `.inf` target.
@@ -44,11 +44,15 @@ Five upstream defects, plus one of our own:
    copy can stand in for the growth curve, but not fix the field.
 5. **Incomplete download sets** -- 9,753 of 9,756 carry all seven format links.
 6. **Dead scanned-source links** -- checked by `make check-scans`.
-7. **Documents the listing axis drops** -- OURS, not the site's. Reads zero
+7. **Documents missing from the change log** -- dated after `/whatisnew`
+   began, with no entry in it.
+8. **Change-log entries for documents no longer listed** -- removed, or moved
+   with the log still naming the old path.
+9. **Documents the listing axis drops** -- OURS, not the site's. Reads zero
    since 2026-08-25; kept as a guard. See `find_unlisted_documents`.
 
-Only the first five are rendered. Those are things sanskritdocuments.org could
-fix; the seventh is a bug in this pipeline, and filing it under "problems that
+All but the last are rendered. Those are things sanskritdocuments.org could
+fix; the last is a bug in this pipeline, and filing it under "problems that
 should be fixed on sanskritdocuments.org" would blame the site for our own key
 format. It is not published separately either -- the page is about the source
 collection, so our own defects print to the console instead.
@@ -75,6 +79,7 @@ from pipeline.config import (CATALOGUE_PATH, DOCS_DATA_DIR, DUMP_2020_DATE,
                              SITE_INVENTORY_PATH, SITE_LISTINGS_PATH,
                              SITE_SIZES_PATH, SNAPSHOT_DATE, TEXT_LOG_PATH,
                              WHATISNEW_EVENTS_PATH)
+from pipeline.parse_whatisnew import id_resolver
 
 SITE_ROOT = "https://sanskritdocuments.org"
 
@@ -121,10 +126,12 @@ LOG_STATS = frozenset({"log_events", "log_documents", "log_pulled_back",
                        "all_pulled_back",
                        "bad_dates_rescued"})
 
-# How many examples a finding lists before it stops. A finding is meant to be
-# actionable, not exhaustive: 76 links is a list someone can work through, 9756
-# is a data dump that makes the page unloadable.
-MAX_EXAMPLES = 60
+# How many examples a finding lists before it stops. A guard against a data
+# dump (9,756 rows would make the page unloadable), NOT a display limit: every
+# list sits in a closed dropdown, and a maintainer working through one needs
+# all of it. At 60 it cut lists of 78, 158 and 282 short with a dead
+# "… and N more" line. Keep it above any real finding.
+MAX_EXAMPLES = 1000
 
 # `~<hash>`, the suffix `fetch_text` appends to disambiguate two documents whose
 # ids differ only by letter case -- macOS and Windows collapse those into one
@@ -470,6 +477,98 @@ def find_suppressed_listings(listings):
                 "note": (row.get("alias_notes") or {}).get(alias, "duplicate of"),
             })
     return {"items": sorted(items, key=lambda i: i["alias"]), "count": len(items)}
+
+
+def load_log_events(path=WHATISNEW_EVENTS_PATH):
+    """The site's change log as `parse_whatisnew` wrote it, or [] if absent.
+
+    Local-only like the 2020 mirror; a machine without it reports both log
+    checks as not run rather than as clean.
+    """
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.open(encoding="utf-8")]
+
+
+def find_unlogged_documents(documents, events, ceiling):
+    """Documents dated after the change log began that it has no entry for.
+
+    The log (`/whatisnew`) has recorded additions since its first entry, so a
+    document that arrived after that should have one. A document dated
+    before it is left out: the log could not have recorded it.
+
+    "Dated" is the earliest evidence we have -- `Latest update` or presence in
+    the June 2020 / Feb 2025 copies -- not the log, which is the thing being
+    checked. A later edit can move `Latest update` forward, so a few of these
+    may be older than they look; the finding says "dated after", no more.
+    """
+    if not events:
+        return {"items": [], "count": 0, "unchecked": True}
+    log_start = min(e["date"] for e in events)
+    resolve = id_resolver({base_id(d["doc_id"]) for d in documents})
+    logged = {resolve(e["doc_id"]) for e in events} - {None}
+    copies = load_attestations(
+        [f"{path}:{date}" for path, date in
+         ((DUMP_2020_INVENTORY_PATH, DUMP_2020_DATE),
+          (INVENTORY_PATH, SNAPSHOT_DATE)) if path.exists()])
+    items = []
+    for doc in documents:
+        doc_id = base_id(doc["doc_id"])
+        if doc_id in logged:
+            continue
+        dates = [d for d in (parse_update(doc.get("latest_update") or "", ceiling),
+                             copies.get(doc_id)) if d]
+        if not dates:
+            continue
+        earliest = min(dates).date().isoformat()
+        if earliest >= log_start:
+            items.append((doc_id, earliest))
+    items.sort(key=lambda it: (it[1], it[0]))
+    return {"items": items, "count": len(items), "log_start": log_start,
+            "unchecked": False}
+
+
+def find_unlisted_log_entries(events, catalogue):
+    """Change-log entries naming a document the site no longer lists.
+
+    "Listed" is the site's own indexes: every document linked from its 20
+    folder pages and 87 topic pages. A logged document on none of them was
+    removed, or moved -- the log keeps a moved document's old entries under
+    its old path. A stem that is still listed in another folder is reported as
+    a likely move, with where it went.
+
+    Only entries on the LIVE log count. `parse_whatisnew` also keeps entries
+    found only in the 2020 mirror's copy of the log; the site has since
+    dropped those, and reporting them would ask it to fix what it already
+    removed. Not checked over the network: a document can be served with no
+    index linking it, so the claim is "no longer listed", not "dead link".
+    """
+    if not events:
+        return {"moved": [], "gone": [], "count": 0, "entries": 0,
+                "unchecked": True}
+    listed = {r["doc_id"] for r in catalogue}
+    resolve = id_resolver(listed)
+    by_stem = collections.defaultdict(list)
+    for doc_id in listed:
+        by_stem[doc_id.split("/", 1)[-1].lower()].append(doc_id)
+    entries = collections.defaultdict(list)
+    for e in events:
+        if e.get("page") == "2020-snapshot":
+            continue
+        if resolve(e["doc_id"]) is None:
+            entries[e["doc_id"]].append(e["date"])
+    moved, gone = [], []
+    for doc_id, dates in sorted(entries.items()):
+        stem = doc_id.split("/", 1)[-1].lower()
+        elsewhere = by_stem.get(stem, [])
+        row = (doc_id, len(dates), max(dates))
+        if len(elsewhere) == 1:
+            moved.append(row + (elsewhere[0],))
+        else:
+            gone.append(row)
+    return {"moved": moved, "gone": gone, "count": len(entries),
+            "entries": sum(len(v) for v in entries.values()),
+            "unchecked": False}
 
 
 def find_unlisted_documents(documents, listings):
@@ -1095,7 +1194,7 @@ def render_malformed(finding):
                        "space in a path, and a <code>.inf</code> target that "
                        "is not a document.")
              + "\n" + _findings_list(entries))
-    return _bullet("Malformed links in the catalogue", finding["count"], inner,
+    return _bullet("Malformed links on topic pages", finding["count"], inner,
                    unit=f"{finding['count']} entries")
 
 
@@ -1214,6 +1313,61 @@ def render_unlisted(finding):
                    inner, unit=f"{finding['count']} documents")
 
 
+def render_unlogged(finding):
+    if finding.get("unchecked"):
+        return ('          <li class="audit-item"><div class="audit-summary '
+                'audit-summary-empty"><span>Documents missing from the change '
+                'log: not checked (run <code>make parse-whatisnew</code>)'
+                '</span></div></li>')
+    by_year = collections.defaultdict(list)
+    for doc_id, date in finding["items"]:
+        by_year[date[:4]].append(
+            f"{_doc_link(doc_id, doc_id.split('/', 1)[1])} — {_esc(date[:7])}")
+    groups = [_sub_bullet(year, len(entries), _findings_list(_capped(entries)))
+              for year, entries in sorted(by_year.items(), reverse=True)]
+    inner = (_preamble(
+        f"The change log, <code>whatisnew</code>, has recorded additions since "
+        f"{_month_name(finding['log_start'])}; these documents are dated after "
+        f"that (by <code>latest_update</code> or an earlier copy of the site) but "
+        f"have no entry in it.")
+        + "\n" + _group_ul(groups))
+    return _bullet("Documents missing from the change log", finding["count"],
+                   inner, unit=f"{finding['count']} documents")
+
+
+def render_unlisted_log_entries(finding):
+    if finding.get("unchecked"):
+        return ('          <li class="audit-item"><div class="audit-summary '
+                'audit-summary-empty"><span>Change-log entries for documents no '
+                'longer listed: not checked (run <code>make parse-whatisnew</code>)'
+                '</span></div></li>')
+
+    def label(doc_id, n, last):
+        times = f"{n} entries, latest" if n > 1 else "entry"
+        return f"<code>{_esc(doc_id)}</code> — {times} {_esc(last)}"
+
+    groups = []
+    if finding["moved"]:
+        entries = [f"{label(d, n, last)}; now {_doc_link(new)}"
+                   for d, n, last, new in finding["moved"]]
+        groups.append(_sub_bullet("moved to another folder",
+                                  len(finding["moved"]),
+                                  _findings_list(_capped(entries))))
+    if finding["gone"]:
+        entries = [label(d, n, last) for d, n, last in finding["gone"]]
+        groups.append(_sub_bullet("removed or renamed", len(finding["gone"]),
+                                  _findings_list(_capped(entries))))
+    inner = (_preamble(
+        "The change log, <code>whatisnew</code>, still has entries for these "
+        "documents, but no folder or topic page on the site lists them any "
+        "more.")
+        + "\n" + _group_ul(groups))
+    return _bullet("Change-log entries for documents no longer listed",
+                   finding["count"], inner,
+                   unit=f"{finding['count']} documents, "
+                        f"{finding['entries']} entries")
+
+
 # The registry. Adding a check is one entry here plus its two functions.
 UPSTREAM_CHECKS = [
     ("suppressed", render_suppressed),
@@ -1223,6 +1377,8 @@ UPSTREAM_CHECKS = [
     ("dates", render_dates),
     ("downloads", render_downloads),
     ("dead_scans", render_dead_scans),
+    ("unlogged", render_unlogged),
+    ("unlisted_log", render_unlisted_log_entries),
 ]
 
 # Runs and prints, but is NOT published -- see `render_audit_html`. The audit
@@ -1438,6 +1594,8 @@ def print_report(findings, stats):
         ("incomplete download set", findings["downloads"]["count"]),
         ("dead scanned sources", findings["dead_scans"]["count"]),
         ("duplicate topic pages", findings["suppressed"]["count"]),
+        ("missing from the change log", findings["unlogged"]["count"]),
+        ("change-log entries no longer listed", findings["unlisted_log"]["count"]),
     ]
     print("  upstream, fixable on sanskritdocuments.org")
     for label, count in rows:
@@ -1475,6 +1633,7 @@ def main():
     scans = load_scans()
     liveness = load_liveness()
     ceiling = fetch_ceiling()
+    log_events = load_log_events()
 
     findings = {
         "missing": find_missing_documents(documents, catalogue, listings),
@@ -1485,6 +1644,8 @@ def main():
         "dead_scans": find_dead_scans(scans, liveness),
         "unlisted": find_unlisted_documents(documents, listings),
         "suppressed": find_suppressed_listings(listings),
+        "unlogged": find_unlogged_documents(documents, log_events, ceiling),
+        "unlisted_log": find_unlisted_log_entries(log_events, catalogue),
     }
     # The scrape date, from the journal `build_tree` stamps
     # `__content_version__` from -- so the About page and the topbar cannot
